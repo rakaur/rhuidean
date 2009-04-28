@@ -1,0 +1,35 @@
+#
+# rhuidean: malkier irc services
+# rakefile: ruby makefile
+#
+# Copyright (c) 2004-2009 Eric Will <rakaur@malkier.net>
+# Copyright (c) 2003-2004 shrike development team
+#
+
+# Import required Ruby modules.
+require 'rake/clean'
+require 'rake/rdoctask'
+require 'rake/testtask'
+
+#
+# Default task - unit tests.
+#
+# $ rake
+#
+task :default => [:test]
+
+Rake::TestTask.new do |t|
+    t.libs << 'test'
+    t.test_files = %w(test/ts_rhuidean.rb)
+end
+
+#
+# Documentation generation.
+#
+# $ rake rdoc
+#
+Rake::RDocTask.new do |r|
+    r.rdoc_dir = 'doc/rdoc'
+    r.options << '--line-numbers' << '--inline-source'
+    r.rdoc_files.include('lib/**/*')
+end

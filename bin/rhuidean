@@ -1,0 +1,24 @@
+#
+# rhuidean: malkier irc services
+# bin/rhuidean: instantiates a new +Rhuidean+ object
+#
+# Copyright (c) 2004-2009 Eric Will <rakaur@malkier.net>
+# Copyright (c) 2003-2004 shrike development team
+#
+
+# Prepare the environment.
+$:  << File.join(Dir.getwd, 'lib')
+$0  = 'rhuidean'
+
+# Import required rhuidean modules.
+require 'rhuidean'
+
+# Start a new instance of the application.
+begin
+    Rhuidean.new
+rescue Exception => err
+    # XXX - eventually put logging and such here.
+    raise
+end
+
+exit 0
