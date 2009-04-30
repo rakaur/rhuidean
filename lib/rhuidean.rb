@@ -7,7 +7,7 @@
 #
 
 # Import required Ruby modules.
-%w(logger).each { |m| require m }
+%w(logger optparse).each { |m| require m }
 
 # The main application class.
 class Rhuidean
@@ -28,6 +28,10 @@ class Rhuidean
 
     # The logging object.
     @@logger = nil
+
+    # Booleans for logging options.
+    @@logging = true
+    @@debug   = false
 
     #
     # Create a new Rhuidean object, which starts and runs the entire
@@ -57,8 +61,24 @@ class Rhuidean
             abort
         end
 
-        # Turn on debug logging.
-        # XXX - change this to an option later
+        # Do command-line options.
+        opts = OptionParser.new
+
+        dd = 'Enable debug logging.'
+        dq = 'Disable regular logging.'
+
+        opts.on('-d', '--debug', dd) { @@debug   = true  }
+        opts.on('-q', '--quiet', dq) { @@logging = false }
+
+        begin
+            opts.parse(*ARGV)
+        rescue OptionParser::ParseError => err
+            puts err, opts
+            abort
+        end
+
+        # Set up the logging object.
+        # XXX - change output to actual files based on fork, etc.
         Rhuidean.logger = Logger.new($stderr)
 
         puts "#{ME}: version #{CODENAME}-#{VERSION} [#{RUBY_PLATFORM}]"
@@ -68,7 +88,7 @@ class Rhuidean
         # Exiting...
 
         Rhuidean.log('exiting...')
-        @@logger.close if @@logger
+        @@logger.close
 
         self
     end
@@ -78,17 +98,30 @@ class Rhuidean
     ######
 
     #
-    # Logs a message using <tt>@@logger</tt>.
+    # Logs a regular message.
     # ---
+    # message:: the string to log
     # returns:: +self+
     #
     def Rhuidean.log(message)
-        @@logger.debug(caller[0].split('/')[-1]) { message }
+        @@logger.info(caller[0].split('/')[-1]) { message } if @@logging
     end
 
     #
-    # Writer for <tt>@@logger</tt>.
+    # Logs a debug message.
     # ---
+    # message:: the string to log
+    # returns:: +self+
+    #
+    def Rhuidean.debug(message)
+        @@logger.debug(caller[0].split('/')[-1]) { message } if @@debug
+    end
+
+    #
+    # Sets the logging object to use.
+    # If it quacks like a Logger object, it should work.
+    # ---
+    # logger:: the Logger to use
     # returns:: +self+
     #
     def Rhuidean.logger=(logger)
@@ -96,6 +129,9 @@ class Rhuidean
 
         @@logger.progname        = 'rhuidean'
         @@logger.datetime_format = '%b %d %H:%M:%S '
-        @@logger.level           = Logger::DEBUG
+
+        # We only have 'logging' and 'debugging', so just set the
+        # object to show all levels. I might change this someday.
+        @@logger.level = Logger::DEBUG
     end
 end
