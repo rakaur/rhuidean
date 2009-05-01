@@ -7,7 +7,10 @@
 #
 
 # Import required Ruby modules.
-%w(logger optparse).each { |m| require m }
+%w(logger optparse pp).each { |m| require m }
+
+# Import required IRC modules.
+require 'irc'
 
 # The main application class.
 class Rhuidean
@@ -33,19 +36,22 @@ class Rhuidean
     @@logging = true
     @@debug   = false
 
+    # The list of all our clients.
+    @@clients = []
+
     #
-    # Create a new Rhuidean object, which starts and runs the entire
+    # Creates a new Rhuidean object, which starts and runs the entire
     # application. Everything starts and ends here.
     # ---
     # returns:: +self+
     #
     def initialize
         # Check to see if we're running on ruby19.
-        if RUBY_VERSION < '1.9.1'
-            puts "#{ME}: requires at least ruby 1.9.1"
-            puts "#{ME}: you have #{RUBY_VERSION}"
-            abort
-        end
+        #if RUBY_VERSION < '1.9.1'
+        #    puts "#{ME}: requires at least ruby 1.9.1"
+        #    puts "#{ME}: you have #{RUBY_VERSION}"
+        #    abort
+        #end
 
         # Check to see if we're running in Windows.
         # XXX - change this to an option later.
@@ -77,20 +83,63 @@ class Rhuidean
             abort
         end
 
+        # XXX - elaborate
+        Signal.trap(:INT) { rhu_exit }
+
         # Set up the logging object.
         # XXX - change output to actual files based on fork, etc.
         Rhuidean.logger = Logger.new($stderr)
 
         puts "#{ME}: version #{CODENAME}-#{VERSION} [#{RUBY_PLATFORM}]"
 
-        # XXX - do stuff.
+        # XXX - configuration file, eventually.
+        servers = { 'irc.malkier.net' => 6667}#,
+                    #'66.225.223.45' => 6667 }
+
+        # Get a new IRC::Client for each server.
+        servers.each do |server, port|
+            Rhuidean.debug("processing #{server}:#{port}")
+
+            @@clients << IRC::Client.new do |c|
+                c.server   = server
+                c.port     = port
+                #c.password = 'boobs'
+                c.nickname = "rhuidean#{rand(999).to_s}"
+                c.username = 'rakaur'
+                c.realname = "a facet of someone else's imagination"
+                #c.bind_to  = ''
+
+                c.connect
+            end
+        end
+
+        Thread.abort_on_exception = true if @debug
+
+        @@clients.each { |c| Thread.new { c.io_loop } }
+
+        Thread.list.each { |t| t.join unless t == Thread.main }
+
 
         # Exiting...
+        rhu_exit
 
+        self
+    end
+
+    #######
+    private
+    #######
+
+    #
+    # Called when we're exiting, cleans up stuff.
+    # ---
+    # returns:: returns to the OS
+    #
+    def rhu_exit
         Rhuidean.log('exiting...')
         @@logger.close
 
-        self
+        exit
     end
 
     ######
@@ -133,5 +182,14 @@ class Rhuidean
         # We only have 'logging' and 'debugging', so just set the
         # object to show all levels. I might change this someday.
         @@logger.level = Logger::DEBUG
+    end
+
+    #
+    # Reader for the list of clients.
+    # ---
+    # returns:: Array of IRC::Client objects.
+    #
+    def Rhuidean.clients
+        @@clients
     end
 end
