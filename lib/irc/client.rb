@@ -15,7 +15,7 @@ module IRC
 class Client
     ##
     # instance attributes
-    attr_accessor :server,  :port,      :password,
+    attr_accessor :server,  :port,      :password, :debug,
                   :nickname, :username, :realname, :bind_to
 
     # Our TCPSocket.
@@ -37,7 +37,15 @@ class Client
     #     c.username = 'rakaur'
     #     c.realname = 'watching the weather change'
     #     c.bind_to  = '10.0.1.20'
-    # end</tt>
+    #
+    #     c.logger    = Logger.new($stderr)
+    #     c.debug     = false
+    # end
+    #
+    # t = Thread.new { client.io_loop }
+    # [...]
+    # client.quit("IRC quit message!")
+    # client.exit
     # ---
     # returns:: +self+
     #
@@ -54,6 +62,10 @@ class Client
         # Our event queue.
         @eventq = EventQueue.new
 
+        # Our Logger object.
+        @logger  = Logger.new($stderr)
+        @debug   = false
+
         # If we have a block let it set up our instance attributes.
         yield(self) if block_given?
 
@@ -63,10 +75,13 @@ class Client
         on(:recvq_ready) { parse }
         on(:dead) { self.dead = true }
 
-        on(:exit) { Thread.exit }
-
         on(:ping) { |origin, target, args| raw("PONG :#{args}") }
-        on(Numeric::RPL_WELCOME)  { join('#test') }
+        on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
+
+        on(:exit) do |from|
+            log("exiting via #{from}...")
+            Thread.exit
+        end
 
         self
     end
@@ -99,7 +114,7 @@ class Client
     #
     def dead=(bool)
         if bool == true
-            Rhuidean.log("lost connection to #@server:#@port")
+            log("lost connection to #@server:#@port")
             @dead   = Time.now.to_i
             @socket = nil
         end
@@ -152,7 +167,7 @@ class Client
         begin
             while to_send = @sendq.shift
                 to_send += "\r\n"
-                Rhuidean.debug(to_send)
+                debug(to_send)
                 @socket.write(to_send)
             end
         rescue Errno::EAGAIN
@@ -197,7 +212,7 @@ class Client
         while line = @recvq.shift
             line.chomp!
 
-            Rhuidean.debug(line)
+            debug(line)
 
             m = IRC_RE.match(line)
 
@@ -232,7 +247,7 @@ class Client
     #
     # Schedules input/output and runs the EventQueue.
     # ---
-    # returns:: XXX - never
+    # returns:: never, thread dies on :exit
     #
     def io_loop
         loop do
@@ -276,7 +291,7 @@ class Client
     def connect
         verify_attributes
 
-        Rhuidean.log("connecting to #@server:#@port")
+        log("connecting to #@server:#@port")
 
         begin
             @socket = TCPSocket.new(@server, @port, @bind_to)
@@ -289,6 +304,62 @@ class Client
         pass(@password) if @password
         nick(@nickname)
         user(@username, @server, @server, @realname)
+    end
+
+    #
+    # Logs a regular message.
+    # ---
+    # message:: the string to log
+    # returns:: +self+
+    #
+    def log(message)
+        @logger.info(caller[0].split('/')[-1]) { message } if @logger
+    end
+
+    #
+    # Logs a debug message.
+    # ---
+    # message:: the string to log
+    # returns:: +self+
+    #
+    def debug(message)
+        @logger.debug(caller[0].split('/')[-1]) { message } if @debug
+    end
+
+    #
+    # Sets the logging object to use.
+    # If it quacks like a Logger object, it should work.
+    # ---
+    # logger:: the Logger to use
+    # returns:: +self+
+    #
+    def logger=(logger)
+        @logger = logger
+
+        # Set to false/nil to disable logging...
+        return unless @logger
+
+        @logger.progname        = 'irc'
+        @logger.datetime_format = '%b %d %H:%M:%S '
+
+        # We only have 'logging' and 'debugging', so just set the
+        # object to show all levels. I might change this someday.
+        @logger.level = Logger::DEBUG
+    end
+
+    ######
+    public
+    ######
+
+    #
+    # Forces the Client's Thread to die. If it's the main thread, the
+    # application goes with it.
+    # ---
+    # returns:: nope!
+    #
+    def exit
+        @eventq.post(:exit, 'exit')
+        @eventq.run
     end
 end
 

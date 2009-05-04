@@ -37,8 +37,6 @@ class EventQueue
     def initialize
         @queue    = []
         @handlers = {}
-
-        Rhuidean.debug('new EventQueue')
     end
 
     ######
@@ -57,8 +55,6 @@ class EventQueue
         # to read from a socket that has no data, or stuff like that.
         return if m = @queue.find { |q| q.event == event }
 
-        #Rhuidean.debug("new :#{event} event posted")
-
         @queue << Event.new(event, *args)
 
         self
@@ -72,7 +68,6 @@ class EventQueue
     # returns:: +self+
     #
     def handle(event, &block)
-        Rhuidean.debug("new handler for :#{event}")
         (@handlers[event] ||= []) << block
 
         self
@@ -96,12 +91,12 @@ class EventQueue
         while e = @queue.shift
             next unless @handlers[e.event]
 
+            # If there's an :exit event in the queue, take it off and stick it
+            # on the end to make sure we flush the queue first.
             if e.event == :exit and not @queue.empty?
                 @queue << e
                 return
             end
-
-            #Rhuidean.debug("executing handlers for :#{e.event}")
 
             @handlers[e.event].each { |block| block.call(*e.args) }
         end

@@ -162,7 +162,7 @@ ERR_BADCHANMASK     = :'476'
 ERR_NOSERVICEHOST   = :'492'
 
 @@table = {}
-constants.each { |c| @table[const_get(c)] = c }
+constants.each { |c| @@table[const_get(c)] = c }
 
 #
 # Given a symbol, returns the constant name.
@@ -171,7 +171,7 @@ constants.each { |c| @table[const_get(c)] = c }
 # returns:: constant
 #
 def Numeric.num2const(num)
-    @table[num]
+    @@table[num]
 end
 
 end # module Numeric

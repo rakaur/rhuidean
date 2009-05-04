@@ -18,39 +18,54 @@ class Client
         @sendq << message
     end
 
-    # IRC NICK command.
+    # Sends an IRC NICK command.
     def nick(nick)
         @sendq << "NICK #{nick}"
     end
 
-    # IRC USER command.
+    # Sends an IRC USER command.
     def user(username, server, host, realname)
         @sendq << "USER #{username} #{server} #{host} :#{realname}"
     end
 
-    # IRC PASS command.
+    # Sends an IRC PASS command.
     def pass(password)
         @sendq << "PASS #{password}"
     end
 
-    # IRC PRIVMSG command.
+    # Sends an IRC PRIVMSG command.
     def privmsg(to, message)
         @sendq << "PRIVMSG #{to} :#{message}"
     end
 
-    # IRC NOTICE command.
+    # Sends an IRC NOTICE command.
     def notice(to, message)
         @sendq << "NOTICE #{to} :#{message}"
     end
 
-    # IRC JOIN command.
-    def join(channel)
-        @sendq << "JOIN #{channel}"
+    # Sends an IRC JOIN command.
+    def join(channel, key = '')
+        @sendq << "JOIN #{channel} #{key}"
     end
 
-    # IRC PART command.
-    def part(channel)
-        @sendq << "PART #{channel}"
+    # Sends an IRC PART command.
+    def part(channel, message = '')
+        @sendq << "PART #{channel} :#{message}"
+    end
+
+    # Sends an IRC MODE command.
+    def umode(mode)
+        @sendq << "MODE #@nickname #{mode}"
+    end
+
+    # Sends an IRC MODE command.
+    def mode(target, mode)
+        @sendq << "MODE #{target} #{mode}"
+    end
+
+    # Send an IRC QUIT command.
+    def quit(message = '')
+        @sendq << "QUIT :#{message}"
     end
 end
 
