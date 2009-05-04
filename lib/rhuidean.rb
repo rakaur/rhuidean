@@ -58,8 +58,8 @@ class Rhuidean
         @clients = []
 
         # Some defaults for state.
-        @logging = true
-        @debug   = false
+        logging = true
+        debug   = false
 
         # Do command-line options.
         opts = OptionParser.new
@@ -67,8 +67,8 @@ class Rhuidean
         dd = 'Enable debug logging.'
         dq = 'Disable regular logging.'
 
-        opts.on('-d', '--debug', dd) { @debug   = true  }
-        opts.on('-q', '--quiet', dq) { @logging = false }
+        opts.on('-d', '--debug', dd) { debug   = true  }
+        opts.on('-q', '--quiet', dq) { logging = false }
 
         begin
             opts.parse(*ARGV)
@@ -98,8 +98,8 @@ class Rhuidean
                 #c.bind_to  = ''
 
                 # XXX - change output to actual files based on fork, etc.
-                c.logger  = false unless @logging
-                c.debug   = @debug
+                c.logger  = false unless logging
+                c.debug   = debug
 
                 c.connect
             end
