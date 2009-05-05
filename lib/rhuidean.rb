@@ -83,8 +83,8 @@ class Rhuidean
         puts "#{ME}: version #{CODENAME}-#{VERSION} [#{RUBY_PLATFORM}]"
 
         # XXX - configuration file, eventually.
-        servers = { 'irc.malkier.net' => 6667,
-                    '66.225.223.45' => 6667 }
+        servers = { 'irc.malkier.net' => 6667 }#,
+                    #'66.225.223.45' => 6667 }
 
         # Get a new IRC::Client for each server.
         servers.each do |server, port|
@@ -101,7 +101,27 @@ class Rhuidean
                 c.logger  = false unless logging
                 c.debug   = debug
 
-                c.connect
+                c.on(IRC::Numeric::RPL_ENDOFMOTD) { c.join('#test') }
+
+                c.on(:PRIVMSG) do |m|
+                    next unless m.origin == 'rakaur!rakaur@malkier.net'
+
+                    next unless m.params[0][0].chr == '.'
+
+                    case m.params[0][1..-1]
+                    when 'chans'
+                        c.privmsg(m.target, c.channels.inspect)
+                    when 'die'
+                        c.quit("parting is such sweet sorrow")
+                        c.exit("rakaur told me to :(")
+                    when 'join'
+                        c.join(m.params[1])
+                    when 'part'
+                        c.part(m.params[1])
+                    else
+                        c.privmsg(m.target, 'what?')
+                    end
+                end
             end
         end
 

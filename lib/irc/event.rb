@@ -88,18 +88,24 @@ class EventQueue
     # returns:: +self+
     #
     def run
+        needs_exit = false
+
         while e = @queue.shift
             next unless @handlers[e.event]
 
-            # If there's an :exit event in the queue, take it off and stick it
-            # on the end to make sure we flush the queue first.
-            if e.event == :exit and not @queue.empty?
-                @queue << e
-                return
+            # If there's an :exit event in the queue wait until we're
+            # all the way done before we handle it.
+            if e.event == :exit
+                needs_exit = e
+                next
             end
 
             @handlers[e.event].each { |block| block.call(*e.args) }
         end
+
+        # Now we can exit... any events that got added by handling routines
+        # just don't happen. This is arguably a bug - XXX.
+        @handlers[:exit].each { |b| b.call(*needs_exit.args) } if needs_exit
 
         self
     end

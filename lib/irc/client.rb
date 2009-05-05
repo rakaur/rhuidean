@@ -7,19 +7,23 @@
 #
 
 # Import required Ruby modules.
-require 'socket'
+%w(logger socket).each { |m| require m }
 
 module IRC
 
 # The IRC::Client class acts as an abstract interface to the IRC protocol.
 class Client
     ##
+    # constants
+    VERSION = '1.0-alpha'
+
+    ##
     # instance attributes
     attr_accessor :server,  :port,      :password, :debug,
                   :nickname, :username, :realname, :bind_to
 
     # Our TCPSocket.
-    attr_reader   :socket
+    attr_reader   :socket, :channels
 
     # A simple Exeption class.
     class Error < Exception
@@ -51,7 +55,11 @@ class Client
     #
     def initialize
         # Is our socket dead?
-        @dead  = false
+        @dead      = false
+        @connected = false
+
+        # List of channels we're on
+        @channels = []
 
         # Received data waiting to be parsed.
         @recvq = []
@@ -70,13 +78,43 @@ class Client
         yield(self) if block_given?
 
         # Set up event handlers.
+        set_default_handlers
+
+        self
+    end
+
+    #######
+    private
+    #######
+
+    #
+    # Sets up some default event handlers to track various states and such.
+    # ---
+    # returns:: +self+
+    #
+    def set_default_handlers
         on(:read_ready)  { read  }
         on(:write_ready) { write }
         on(:recvq_ready) { parse }
         on(:dead) { self.dead = true }
 
-        on(:ping) { |origin, target, args| raw("PONG :#{args}") }
         on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
+
+        on(:PING) { |m| raw("PONG :#{m.target}") }
+
+        on(:JOIN) do |m|
+            @channels << m.target if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
+        end
+
+        on(:PART) do |m|
+            if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
+                @channels.delete(m.target)
+            end
+        end
+
+        on(:KICK) do |m|
+            @channels.delete(m.target) if m.params[0] == @nickname
+        end
 
         on(:exit) do |from|
             log("exiting via #{from}...")
@@ -85,10 +123,6 @@ class Client
 
         self
     end
-
-    #######
-    private
-    #######
 
     #
     # Verifies all required attributes are set.
@@ -115,8 +149,9 @@ class Client
     def dead=(bool)
         if bool == true
             log("lost connection to #@server:#@port")
-            @dead   = Time.now.to_i
-            @socket = nil
+            @dead      = Time.now.to_i
+            @socket    = nil
+            @connected = false
         end
     end
 
@@ -165,10 +200,11 @@ class Client
     #
     def write
         begin
-            while to_send = @sendq.shift
-                to_send += "\r\n"
-                debug(to_send)
-                @socket.write(to_send)
+            # Use shift because we need it to fall off immediately.
+            while line = @sendq.shift
+                line += "\r\n"
+                debug(line)
+                @socket.write(line)
             end
         rescue Errno::EAGAIN
             retry
@@ -209,7 +245,7 @@ class Client
     # returns:: +self+
     #
     def parse
-        while line = @recvq.shift
+        @recvq.each do |line|
             line.chomp!
 
             debug(line)
@@ -221,8 +257,19 @@ class Client
             target  = m[3]
             params  = m[4]
 
-            @eventq.post(command.downcase.to_sym, origin, target, params)
+            if params and not target
+                target = params
+                params = nil
+            end
+
+            params = params.split if params
+
+            msg = Message.new(self, line, origin, target, params)
+
+            @eventq.post(command.upcase.to_sym, msg)
         end
+
+        @recvq.clear
 
         self
     end
@@ -233,6 +280,12 @@ class Client
 
     #
     # Registers Event handlers with our EventQueue.
+    # ---
+    # <tt>c.on(:PRIVMSG) do |m|
+    #     if m.params =~ /\.die/ and m.origin == my_master
+    #         c.quit(params)
+    #         c.exit
+    #     end</tt>
     # ---
     # event:: name of the event as a Symbol
     # block:: block to call when Event is posted
@@ -247,7 +300,7 @@ class Client
     #
     # Schedules input/output and runs the EventQueue.
     # ---
-    # returns:: never, thread dies on :exit
+    # returns:: never, thread dies on +:exit+
     #
     def io_loop
         loop do
@@ -256,6 +309,8 @@ class Client
                 connect
                 next
             end
+
+            connect unless connected?
 
             # Run the event loop. These events will add IO, and possibly other
             # events, so we keep running until it's empty.
@@ -284,6 +339,15 @@ class Client
     end
 
     #
+    # Are we connected?
+    # ---
+    # returns:: +true+ or +false+
+    #
+    def connected?
+        @connected
+    end
+
+    #
     # Creates and connects our socket.
     # ---
     # returns:: +self+
@@ -299,7 +363,8 @@ class Client
             @eventq.post(:dead)
         end
 
-        @dead = false
+        @dead      = false
+        @connected = true
 
         pass(@password) if @password
         nick(@nickname)
@@ -347,19 +412,31 @@ class Client
         @logger.level = Logger::DEBUG
     end
 
-    ######
-    public
-    ######
-
     #
     # Forces the Client's Thread to die. If it's the main thread, the
     # application goes with it.
     # ---
     # returns:: nope!
     #
-    def exit
-        @eventq.post(:exit, 'exit')
+    def exit(from = 'exit')
+        @eventq.post(:exit, from)
         @eventq.run
+    end
+end
+
+# A simple data-holding class.
+class Message
+    ##
+    # instance attributes
+    attr_reader :client, :raw, :origin, :target, :params
+
+    #
+    # Creates a new Message. We use these to represent the old
+    # style of (char *origin, char *target, char *parv[]) in C.
+    #
+    def initialize(client, raw, origin, target, params)
+        @client, @raw, @origin = client, raw, origin
+        @target, @params       = target, params
     end
 end
 
