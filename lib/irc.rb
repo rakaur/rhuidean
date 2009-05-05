@@ -7,4 +7,6 @@
 #
 
 # Import required IRC modules.
-%w(irc/client irc/event irc/methods irc/numeric).each { |m| require m }
+%w(irc/client irc/event irc/methods irc/numeric irc/timer).each do |m|
+    require m
+end

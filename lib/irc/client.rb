@@ -320,7 +320,7 @@ class Client
 
             writefd = [@socket] unless @sendq.empty?
 
-            ret = IO.select([@socket], writefd, [], nil)
+            ret = IO.select([@socket], writefd, [], 10)
 
             next unless ret
 

@@ -31,7 +31,7 @@ end
 Rake::RDocTask.new do |r|
     r.rdoc_dir = 'doc/rdoc'
     r.options << '--line-numbers' << '--inline-source'
-    r.rdoc_files.include('lib/**/*')
+    r.rdoc_files.include('lib/irc.rb lib/irc/**/*')
 end
 
 #
