@@ -11,7 +11,7 @@ warn <<-end
 
     You have 15 seconds to cancel (CTRL+C).
 
-    These tests connect to irc.malkier.net:6667 and join #test for a brief
+    These tests connect to irc.malkier.net:6667 and join #malkier for a brief
     period of time (a few seconds), and posts the client version and platform.
     If you do not want your machine to do this, do not run these tests!
 
@@ -59,8 +59,8 @@ class TestClient < Test::Unit::TestCase
             c.on(IRC::Numeric::RPL_WELCOME) { welcome = true  }
 
             c.on(IRC::Numeric::RPL_ENDOFMOTD) do
-                c.join('#test')
-                c.privmsg('#test', str)
+                c.join('#malkier')
+                c.privmsg('#malkier', str)
             end
         end
 

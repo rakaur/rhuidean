@@ -92,7 +92,7 @@ class Rhuidean
                 c.server   = server
                 c.port     = port
                 #c.password = 'boobs'
-                c.nickname = "rhuidean#{rand(999).to_s}"
+                c.nickname = 'rhuidean'
                 c.username = 'rakaur'
                 c.realname = "a facet of someone else's imagination"
                 #c.bind_to  = ''
@@ -101,7 +101,7 @@ class Rhuidean
                 c.logger  = false unless logging
                 c.debug   = debug
 
-                c.on(IRC::Numeric::RPL_ENDOFMOTD) { c.join('#test') }
+                c.on(IRC::Numeric::RPL_ENDOFMOTD) { c.join('#malkier') }
 
                 c.on(:PRIVMSG) do |m|
                     next unless m.origin == 'rakaur!rakaur@malkier.net'
@@ -118,6 +118,8 @@ class Rhuidean
                         c.join(m.params[1])
                     when 'part'
                         c.part(m.params[1])
+                    when 'raw'
+                        c.raw(m.params[1..-1].join(' '))
                     else
                         c.privmsg(m.target, 'what?')
                     end

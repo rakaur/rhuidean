@@ -388,6 +388,8 @@ class Client
     # returns:: +self+
     #
     def debug(message)
+        return unless @logger
+
         @logger.debug(caller[0].split('/')[-1]) { message } if @debug
     end
 
