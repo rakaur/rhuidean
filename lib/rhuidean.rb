@@ -33,12 +33,17 @@ class Rhuidean
     # returns:: +self+
     #
     def initialize
-        # Check to see if we're running on ruby19.
-        #if RUBY_VERSION < '1.9.1'
-        #    puts "#{ME}: requires at least ruby 1.9.1"
-        #    puts "#{ME}: you have #{RUBY_VERSION}"
-        #    abort
-        #end
+        puts "#{ME}: version #{CODENAME}-#{VERSION} [#{RUBY_PLATFORM}]"
+
+        # Check to see if we're running on a decent version of ruby.
+        if RUBY_VERSION < '1.8.6'
+            puts "#{ME}: requires at least ruby 1.8.6"
+            puts "#{ME}: you have #{RUBY_VERSION}"
+            abort
+        elsif RUBY_VERSION < '1.9.1'
+            puts "#{ME}: supports ruby 1.9 (much faster)"
+            puts "#{ME}: you have #{RUBY_VERSION}"
+        end
 
         # Check to see if we're running in Windows.
         # XXX - change this to an option later.
@@ -58,17 +63,25 @@ class Rhuidean
         @clients = []
 
         # Some defaults for state.
-        logging = true
-        debug   = false
+        logging  = true
+        debug    = false
+        willfork = RUBY_PLATFORM =~ /win32/i ? false : true
+        wd       = Dir.getwd
 
         # Do command-line options.
         opts = OptionParser.new
 
         dd = 'Enable debug logging.'
-        dq = 'Disable regular logging.'
+        hd = 'Display usage information.'
+        nd = 'Do not fork into the background.'
+        qd = 'Disable regular logging.'
+        vd = 'Display version information.'
 
-        opts.on('-d', '--debug', dd) { debug   = true  }
-        opts.on('-q', '--quiet', dq) { logging = false }
+        opts.on('-d', '--debug',   dd) { debug    = true  }
+        opts.on('-h', '--help',    hd) { puts opts; abort }
+        opts.on('-n', '--no-fork', nd) { willfork = false }
+        opts.on('-q', '--quiet',   qd) { logging  = false }
+        opts.on('-v', '--version', vd) { abort            }
 
         begin
             opts.parse(*ARGV)
@@ -77,10 +90,52 @@ class Rhuidean
             abort
         end
 
-        # XXX - elaborate
-        Signal.trap(:INT) { rhu_exit }
+        # Signal handlers.
+        trap(:INT)   { rhu_exit }
+        trap(:PIPE)  { :SIG_IGN }
+        trap(:CHLD)  { :SIG_IGN }
+        trap(:WINCH) { :SIG_IGN }
+        trap(:TTIN)  { :SIG_IGN }
+        trap(:TTOU)  { :SIG_IGN }
+        trap(:TSTP)  { :SIG_IGN }
 
-        puts "#{ME}: version #{CODENAME}-#{VERSION} [#{RUBY_PLATFORM}]"
+        # Should probably do config stuff here - XXX
+
+        if debug
+            puts "#{ME}: warning: debug mode enabled"
+            puts "#{ME}: warning: everything will be logged in the clear!"
+        end
+
+        # Fork into the background
+        if willfork
+            begin
+                pid = fork
+            rescue Exception => e
+                puts "#{ME}: cannot fork into the background"
+                abort
+            end
+
+            # This is the child process.
+            unless pid
+                Dir.chdir(wd)
+                File.umask(0)
+            else # This is the parent process.
+                puts "#{ME}: pid #{pid}"
+                puts "#{ME}: running in background mode from #{Dir.getwd}"
+                abort
+            end
+
+            # XXX - write pid/check if running
+
+            $stdin.close
+            $stdout.close
+            $stderr.close
+        else
+            puts "#{ME}: pid #{Process.pid}"
+            puts "#{ME}: running in foreground mode from #{Dir.getwd}"
+        end
+
+        sleep # XXX - can't let callandor connect to irc...
 
         # XXX - configuration file, eventually.
         servers = { 'irc.malkier.net' => 6667 }#,
