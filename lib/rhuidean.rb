@@ -135,7 +135,7 @@ class Rhuidean
             puts "#{ME}: running in foreground mode from #{Dir.getwd}"
         end
 
-        sleep # XXX - can't let callandor connect to irc...
+        #sleep # XXX - can't let callandor connect to irc...
 
         # XXX - configuration file, eventually.
         servers = { 'irc.malkier.net' => 6667 }#,
