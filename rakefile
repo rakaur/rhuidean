@@ -51,7 +51,7 @@ end
 
 spec = Gem::Specification.new do |s|
     s.name     = 'rhuidean'
-    s.version  = '1.0'
+    s.version  = '0.2' # Not really, but gems are stupid.
     s.author   = 'Eric Will'
     s.email    = 'rakaur@malkier.net'
     s.platform = Gem::Platform::RUBY
