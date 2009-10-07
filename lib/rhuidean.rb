@@ -21,7 +21,7 @@ class Rhuidean
     ME       = 'rhuidean'
 
     # The full version number.
-    VERSION  = '1.0-alpha'
+    VERSION  = '0.1.1'
 
     # The codename for this major version.
     CODENAME = 'praxis'
@@ -106,6 +106,24 @@ class Rhuidean
             puts "#{ME}: warning: everything will be logged in the clear!"
         end
 
+        # Check to see if we're already running.
+        if File.exists?('var/rhuidean.pid')
+            curpid = nil
+
+            File.open('var/rhuidean.pid', 'r') do |f|
+                curpid = f.read.chomp.to_i
+            end
+
+            begin
+                Process.kill(0, curpid)
+            rescue Errno::ESRCH
+                File.delete('var/rhuidean.pid')
+            else
+                puts "#{ME}: daemon is already running"
+                abort
+            end
+        end
+
         # Fork into the background
         if willfork
             begin
@@ -120,12 +138,14 @@ class Rhuidean
                 Dir.chdir(wd)
                 File.umask(0)
             else # This is the parent process.
+                # Write the PID file.
+                Dir.mkdir('var') unless File.exists?('var')
+                File.open('var/rhuidean.pid', 'w') { |f| f.puts(pid) }
+
                 puts "#{ME}: pid #{pid}"
                 puts "#{ME}: running in background mode from #{Dir.getwd}"
                 abort
             end
-
-            # XXX - write pid/check if running
 
             $stdin.close
             $stdout.close
@@ -134,8 +154,6 @@ class Rhuidean
             puts "#{ME}: pid #{Process.pid}"
             puts "#{ME}: running in foreground mode from #{Dir.getwd}"
         end
-
-        #sleep # XXX - can't let callandor connect to irc...
 
         # XXX - configuration file, eventually.
         servers = { 'irc.malkier.net' => 6667 }#,

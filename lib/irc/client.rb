@@ -15,7 +15,7 @@ module IRC
 class Client
     ##
     # constants
-    VERSION = '1.0-alpha'
+    VERSION = '0.1.1'
 
     ##
     # instance attributes

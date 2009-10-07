@@ -104,7 +104,7 @@ class EventQueue
         end
 
         # Now we can exit... any events that got added by handling routines
-        # just don't happen. This is arguably a bug - XXX.
+        # just don't happen. This is arguably a bug.
         @handlers[:exit].each { |b| b.call(*needs_exit.args) } if needs_exit
 
         self
