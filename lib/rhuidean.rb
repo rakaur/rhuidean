@@ -46,11 +46,9 @@ class Rhuidean
         end
 
         # Check to see if we're running in Windows.
-        # XXX - change this to an option later.
         if RUBY_PLATFORM =~ /win32/i
-            puts "#{ME}: requires the fork() system call"
-            puts "#{ME}: cannot run on windows"
-            abort
+            puts "#{ME}: requires the fork() system call to daemonize"
+            puts "#{ME}: not available on windows"
         end
 
         # Check to see if we're running as root.
