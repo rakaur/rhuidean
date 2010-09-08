@@ -1,9 +1,8 @@
 #
-# rhuidean: malkier irc services
-# lib/irc/timer.rb: timed code execution
+# rhuidean: a small, lightweight IRC client library
+# lib/rhuidean/timer.rb: timed code execution
 #
-# Copyright (c) 2004-2009 Eric Will <rakaur@malkier.net>
-# Copyright (c) 2003-2004 shrike development team
+# Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
 #
 
 module IRC

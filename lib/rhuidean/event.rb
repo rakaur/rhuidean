@@ -1,9 +1,8 @@
 #
-# rhuidean: malkier irc services
-# lib/irc/event.rb: IRC events
+# rhuidean: a small, lightweight IRC client library
+# lib/rhuidean/event.rb: IRC events
 #
-# Copyright (c) 2004-2009 Eric Will <rakaur@malkier.net>
-# Copyright (c) 2003-2004 shrike development team
+# Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
 #
 
 module IRC

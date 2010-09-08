@@ -1,9 +1,8 @@
 #
-# rhuidean: malkier irc services
-# lib/irc/client.rb: IRC::Client class
+# rhuidean: a small, lightweight IRC client library
+# lib/rhuidean/client.rb: IRC::Client class
 #
-# Copyright (c) 2004-2009 Eric Will <rakaur@malkier.net>
-# Copyright (c) 2003-2004 shrike development team
+# Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
 #
 
 module IRC

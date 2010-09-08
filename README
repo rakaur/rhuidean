@@ -1,13 +1,17 @@
 #
-# rhuidean: malkier irc services
+# rhuidean: a small IRC client library
 # README: at-a-glance documentation
 #
 # Copyright (c) 2004-2009 Eric Will <rakaur@malkier.net>
 # Copyright (c) 2003-2004 shrike development team
 #
 
-If you check out this repository, you're going to get a bot I'm playing with
-that happens to use the IRC library I wrote. If you want just the IRC library,
-I suggest you get the RubyGems file from the downloads section of this site.
+This repository contains a simple, quick IRC client library. If you have a
+decent understanding of IRC and want to control most of the IRC events
+yourself this is very easy and quick to pick up. The library handles all of
+the socket code and sets up a simple event handling system for IRC events.
 
 It's not very well documented yet, but I'm still working on it.
+
+The code itself is documented. Run `rake rdoc` and check out the doc/ directory.
+
