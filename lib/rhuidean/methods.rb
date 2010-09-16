@@ -69,3 +69,4 @@ class Client
 end
 
 end # module IRC
+

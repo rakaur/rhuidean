@@ -111,3 +111,4 @@ class EventQueue
 end
 
 end # module IRC
+

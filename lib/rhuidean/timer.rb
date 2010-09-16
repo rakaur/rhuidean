@@ -101,3 +101,4 @@ class Timer
 end
 
 end # module IRC
+

@@ -14,11 +14,11 @@ module IRC
 class Client
     ##
     # constants
-    VERSION = '0.2.1'
+    VERSION = '0.2.2'
 
     ##
     # instance attributes
-    attr_accessor :server,  :port,      :password, :debug,
+    attr_accessor :server,   :port,     :password, :debug, :thread,
                   :nickname, :username, :realname, :bind_to
 
     # Our TCPSocket.
@@ -45,8 +45,8 @@ class Client
     #     c.debug     = false
     # end
     #
-    # t = Thread.new { client.io_loop }
-    # Thread.list.each { |t| t.join unless t == Thread.main } # or similar...
+    # client.thread = Thread.new { client.io_loop }
+    # clients.each { |client| client.thread.join }
     # [...]
     # client.quit("IRC quit message!")
     # client.exit
@@ -262,7 +262,7 @@ class Client
                 params = nil
             end
 
-            params = params.split if params
+            params &&= params.split
 
             msg = Message.new(self, line, origin, target, params)
 
@@ -443,3 +443,4 @@ class Message
 end
 
 end # module IRC
+

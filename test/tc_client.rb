@@ -71,3 +71,4 @@ class TestClient < Test::Unit::TestCase
         assert(true, welcome)
     end
 end
+
