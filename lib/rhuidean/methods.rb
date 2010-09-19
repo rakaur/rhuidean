@@ -52,6 +52,16 @@ class Client
         @sendq << "PART #{channel} :#{message}"
     end
 
+    # Sends an IRC KICK command.
+    def kick(channel, target, reason = '')
+        @sendq << "KICK #{channel} #{target} :#{reason}"
+    end
+
+    # Sends an IRC TOPIC command.
+    def topic(target, new = '')
+        @sendq << "TOPIC #{target} :#{new}"
+    end
+
     # Sends an IRC MODE command.
     def umode(mode)
         @sendq << "MODE #@nickname #{mode}"
@@ -60,6 +70,11 @@ class Client
     # Sends an IRC MODE command.
     def mode(target, mode)
         @sendq << "MODE #{target} #{mode}"
+    end
+
+    # Sends an IRC INVITE command.
+    def invite(target, channel)
+        @senq << "INVITE #{target} #{channel}"
     end
 
     # Send an IRC QUIT command.

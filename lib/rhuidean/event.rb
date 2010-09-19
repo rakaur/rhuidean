@@ -44,18 +44,18 @@ class EventQueue
 
     #
     # Post a new event to the queue to be handled.
+    # Events can be posted more than once per loop,
+    # so the callers need to make sure calling the
+    # same handlers twice for the same run isn't going
+    # to bork something serious like make an otherwise
+    # good call become blocking (like read).
     # ---
     # event:: event name as a Symbol
     # args:: list of arguments to pass to handler
     # returns:: +self+
     #
     def post(event, *args)
-        # Only one post per event per loop, otherwise we end up trying
-        # to read from a socket that has no data, or stuff like that.
-        return if m = @queue.find { |q| q.event == event }
-
         @queue << Event.new(event, *args)
-
         self
     end
 
