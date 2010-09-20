@@ -77,7 +77,22 @@ class Client
         # If we have a block let it set up our instance attributes.
         yield(self) if block_given?
 
-        # Set up event handlers.
+        # Core events which are needed to work at all.
+        on(:read_ready)  { read  }
+        on(:write_ready) { write }
+        on(:recvq_ready) { parse }
+
+        on(:dead) { self.dead = true }
+
+        on(:exit) do |from|
+            log("exiting via #{from}...")
+            Thread.exit
+        end
+
+        on(:PING) { |m| raw("PONG :#{m.target}") }
+
+        # Set up event handlers. These track some state and such, and can
+        # be overridden for other functionality in any child classes.
         set_default_handlers
 
         self
@@ -93,16 +108,8 @@ class Client
     # returns:: +self+
     #
     def set_default_handlers
-        on(:read_ready)  { read  }
-        on(:write_ready) { write }
-        on(:recvq_ready) { parse }
-        on(:dead) { self.dead = true }
-
         # Consider ourselves connected on 001
         on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
-
-        # Keep alive...
-        on(:PING) { |m| raw("PONG :#{m.target}") }
 
         # Track our nickname...
         on(:NICK) do |m|
@@ -126,11 +133,6 @@ class Client
         # Track channels
         on(:KICK) do |m|
             @channels.delete(m.target) if m.params[0] == @nickname
-        end
-
-        on(:exit) do |from|
-            log("exiting via #{from}...")
-            Thread.exit
         end
 
         self
