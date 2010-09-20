@@ -98,20 +98,32 @@ class Client
         on(:recvq_ready) { parse }
         on(:dead) { self.dead = true }
 
+        # Consider ourselves connected on 001
         on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
 
+        # Keep alive...
         on(:PING) { |m| raw("PONG :#{m.target}") }
 
+        # Track our nickname...
+        on(:NICK) do |m|
+            if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
+                @nickname = m.params[0]
+            end
+        end
+
+        # Track channels
         on(:JOIN) do |m|
             @channels << m.target if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
         end
 
+        # Track channels
         on(:PART) do |m|
             if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
                 @channels.delete(m.target)
             end
         end
 
+        # Track channels
         on(:KICK) do |m|
             @channels.delete(m.target) if m.params[0] == @nickname
         end
