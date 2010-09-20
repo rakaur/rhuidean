@@ -38,7 +38,7 @@ end
 #
 # $ rake package
 #
-PKG_FILES = FileList['README', 'rakefile',
+PKG_FILES = FileList['README.markdown', 'rakefile',
                      'lib/rhuidean.rb', 'lib/rhuidean/**/*.rb',
                      'test/*.rb']
 
