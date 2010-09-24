@@ -14,7 +14,7 @@ module IRC
 class Client
     ##
     # constants
-    VERSION = '0.2.3'
+    VERSION = '0.2.4'
 
     ##
     # instance attributes
@@ -95,6 +95,11 @@ class Client
         # be overridden for other functionality in any child classes.
         set_default_handlers
 
+        # Special method for default CTCP replies
+        # I use this so they don't get wiped out when someone overrides
+        # the default handlers, but also so that they CAN be wiped out.
+        set_ctcp_handlers
+
         self
     end
 
@@ -112,30 +117,39 @@ class Client
         on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
 
         # Track our nickname...
-        on(:NICK) do |m|
-            if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
-                @nickname = m.params[0]
-            end
-        end
+        on(:NICK) { |m| @nickname = m.target if m.origin_nick == @nickname }
 
         # Track channels
-        on(:JOIN) do |m|
-            @channels << m.target if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
-        end
+        on(:JOIN) { |m| @channels << m.target if m.origin_nick == @nickname }
 
-        # Track channels
         on(:PART) do |m|
-            if m.origin =~ /^(#{@nickname})\!(.+)\@(.+)$/
-                @channels.delete(m.target)
-            end
+            @channels.delete(m.target) if m.origin_nick == @nickname
         end
 
-        # Track channels
-        on(:KICK) do |m|
-            @channels.delete(m.target) if m.params[0] == @nickname
-        end
+        on(:KICK) { |m| @channels.delete(m.target) if m.params[0] == @nickname }
 
         self
+    end
+
+    #
+    # Sets up some default CTCP replies.
+    # ---
+    # returns:: +self+
+    #
+    def set_ctcp_handlers
+        on(:PRIVMSG) do |m|
+            case m.ctcp
+            when :ping
+                notice(m.origin_nick, "\1PING #{m.params.join(' ')}\1")
+            when :version
+                v_str = "rhuidean-#{VERSION}"
+                notice(m.origin_nick, "\1VERSION #{v_str}\1")
+            when :clientinfo
+                notice(m.origin_nick, "\1CLIENTINFO 114 97 107 97 117 114\1")
+            else
+                next
+            end
+        end
     end
 
     #
@@ -296,6 +310,7 @@ class Client
     # Registers Event handlers with our EventQueue.
     # ---
     # <tt>c.on(:PRIVMSG) do |m|
+    #     next if m.params.empty?
     #     if m.params =~ /\.die/ and m.origin == my_master
     #         c.quit(params)
     #         c.exit
@@ -443,16 +458,52 @@ end
 # A simple data-holding class.
 class Message
     ##
+    # constants
+    ORIGIN_RE = /^(.+)\!(.+)\@(.+)$/
+
+    ##
     # instance attributes
-    attr_reader :client, :raw, :origin, :target, :params
+    attr_reader :client, :ctcp, :origin, :params, :raw, :target
+    attr_reader :origin_nick
 
     #
     # Creates a new Message. We use these to represent the old
     # style of (char *origin, char *target, char *parv[]) in C.
     #
     def initialize(client, raw, origin, target, params)
-        @client, @raw, @origin = client, raw, origin
-        @target, @params       = target, params
+        @client, @ctcp, @origin = client, nil, origin
+        @params, @raw,  @target = params, raw, target
+
+        # Is the origin a user? Let's make this a little more simple...
+        if m = ORIGIN_RE.match(@origin)
+            @origin_nick = m[1]
+        end
+
+        # Reformat it a bit if it's a CTCP.
+        if @params and not @params.empty? and @params[0][0] == "\1"
+            @params[-1].chop!
+            @ctcp = @params.shift[1 .. -1].downcase.to_sym
+        end
+    end
+
+    ######
+    public
+    ######
+
+    def to_channel?
+        %w(# & !).include?(@target[0])
+    end
+
+    def is_ctcp?
+        @ctcp
+    end
+
+    def is_action?
+        @ctcp == :action
+    end
+
+    def is_dcc?
+        @ctcp == :dcc
     end
 end
 
