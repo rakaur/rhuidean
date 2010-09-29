@@ -193,8 +193,8 @@ class Client
             ret = @socket.readpartial(8192)
         rescue Errno::EAGAIN
             retry
-        rescue EOFError
-            ret = nil
+        rescue Errno::ETIMEDOUT, EOFError
+            ret = nil # Dead
         end
 
         unless ret
@@ -464,7 +464,7 @@ class Message
     ##
     # instance attributes
     attr_reader :client, :ctcp, :origin, :params, :raw, :target
-    attr_reader :origin_nick
+    attr_reader :origin_nick, :origin_user, :origin_host
 
     #
     # Creates a new Message. We use these to represent the old
@@ -476,7 +476,7 @@ class Message
 
         # Is the origin a user? Let's make this a little more simple...
         if m = ORIGIN_RE.match(@origin)
-            @origin_nick = m[1]
+            @origin_nick, @origin_user, @origin_host = m[1..3]
         end
 
         # Reformat it a bit if it's a CTCP.
