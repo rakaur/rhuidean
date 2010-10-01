@@ -14,7 +14,7 @@ module IRC
 class Client
     ##
     # constants
-    VERSION = '0.2.4'
+    VERSION = '0.2.5'
 
     ##
     # instance attributes
@@ -349,7 +349,15 @@ class Client
 
             writefd = [@socket] unless @sendq.empty?
 
-            ret = IO.select([@socket], writefd, [], 10)
+            # Ruby's threads suck. In theory, the timers should
+            # manage themselves in separate threads. Unfortunately,
+            # Ruby has a global lock and the scheduler isn't great, so
+            # this tells select() to timeout when the next timer needs to run.
+            timeout = (Timer.next_time - Time.now.to_f).round(0).to_i
+            timeout = 1 if timeout == 0 # Don't want 0, that's forever
+            timeout = 60 if timeout < 0 # Less than zero means no timers
+
+            ret = IO.select([@socket], writefd, [], timeout)
 
             next unless ret
 

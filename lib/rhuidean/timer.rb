@@ -15,7 +15,7 @@ class Timer
 
     ##
     # instance attributes
-    attr_reader :time, :repeat
+    attr_reader :time, :timeout, :repeat
 
     #
     # Creates a new timer to be executed within +10 seconds of +time+.
@@ -26,9 +26,10 @@ class Timer
     # returns:: +self+
     #
     def initialize(time, repeat = false, &block)
-        @time   = time.to_i
-        @repeat = repeat
-        @block  = block
+        @time    = time.to_i
+        @timeout = Time.now.to_f + @time
+        @repeat  = repeat
+        @block   = block
 
         @@timers << self
 
@@ -59,6 +60,15 @@ class Timer
     #
     def Timer.after(time, &block)
         new(time, false, &block)
+    end
+
+    #
+    # Returns the Unix timestamp of the next time a timer should run
+    # ---
+    # returns:: minimum timer interval, see above
+    #
+    def Timer.next_time
+        @@timers.collect { |t| t.timeout }.min
     end
 
     #
@@ -93,6 +103,7 @@ class Timer
         loop do
             sleep(@time)
             @block.call
+            @timeout = Time.now.to_f + @time if @repeat
             break unless @repeat
         end
 

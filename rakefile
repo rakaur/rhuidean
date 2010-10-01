@@ -10,7 +10,7 @@
     require 'rake/' + m
 end
 
-VER = '0.2.4'
+VER = '0.2.5'
 
 #
 # Default task - unit tests.
