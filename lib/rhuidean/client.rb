@@ -193,7 +193,7 @@ class Client
             ret = @socket.readpartial(8192)
         rescue Errno::EAGAIN
             retry
-        rescue Errno::ETIMEDOUT, EOFError
+        rescue EOFError, SystemCallError
             ret = nil # Dead
         end
 
