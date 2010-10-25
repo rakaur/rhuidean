@@ -68,6 +68,7 @@ class Timer
     # returns:: minimum timer interval, see above
     #
     def Timer.next_time
+        return 0 if @@timers.empty?
         @@timers.collect { |t| t.timeout }.min
     end
 
