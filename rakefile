@@ -10,7 +10,9 @@
     require 'rake/' + m
 end
 
-VER = '0.2.6'
+$: << Dir.getwd
+
+require 'lib/rhuidean'
 
 #
 # Default task - unit tests.
@@ -20,7 +22,6 @@ VER = '0.2.6'
 task :default => [:test]
 
 Rake::TestTask.new do |t|
-    t.libs << 'test'
     t.test_files = %w(test/ts_rhuidean.rb)
 end
 
@@ -46,7 +47,7 @@ PKG_FILES = FileList['README.markdown', 'rakefile',
 
 Rake::PackageTask.new('package') do |p|
     p.name          = 'rhuidean'
-    p.version       = VER
+    p.version       = Rhuidean::VERSION
     p.need_tar      = false
     p.need_zip      = false
     p.package_files = PKG_FILES
@@ -54,7 +55,7 @@ end
 
 spec = Gem::Specification.new do |s|
     s.name     = 'rhuidean'
-    s.version  = VER
+    s.version  = Rhuidean::VERSION
     s.author   = 'Eric Will'
     s.email    = 'rakaur@malkier.net'
     s.homepage = 'http://github.com/rakaur/rhuidean/'

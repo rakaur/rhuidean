@@ -5,11 +5,9 @@
 # Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
 #
 
-$: << 'lib'
+$: << Dir.getwd
 
 require 'test/unit'
-
-require 'rhuidean'
-
+require 'lib/rhuidean'
 require 'test/tc_client.rb'
 

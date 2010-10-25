@@ -12,9 +12,7 @@ module IRC
 
 # The IRC::Client class acts as an abstract interface to the IRC protocol.
 class Client
-    ##
-    # constants
-    VERSION = '0.2.6'
+    include Rhuidean # Version info and such
 
     ##
     # instance attributes
@@ -197,7 +195,7 @@ class Client
             ret = nil # Dead
         end
 
-        unless ret
+        if not ret or ret.empty?
             @eventq.post(:dead)
             return
         end
@@ -236,6 +234,9 @@ class Client
             end
         rescue Errno::EAGAIN
             retry
+        rescue Exception
+            @eventq.post(:dead)
+            return
         end
     end
 

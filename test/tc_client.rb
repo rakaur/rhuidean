@@ -51,24 +51,22 @@ class TestClient < Test::Unit::TestCase
         assert_match(/^rhuidean\d+$/,   c.nickname)
         assert_equal('rhuidean',        c.username)
 
-        welcome = false
-        str     = "rhuidean-#{IRC::Client::VERSION} [#{RUBY_PLATFORM}]"
+        worked  = false
+        str     = "rhuidean-#{Rhuidean::VERSION} [#{RUBY_PLATFORM}]"
 
         assert_nothing_raised do
-            c.on(IRC::Numeric::RPL_WELCOME) { welcome = true  }
-
             c.on(IRC::Numeric::RPL_ENDOFMOTD) do
                 c.join('#malkier')
                 c.privmsg('#malkier', str)
+                worked = true
             end
         end
 
-        assert_nothing_raised { c.connect }
+        c.thread = Thread.new { c.io_loop }
 
-        t = Thread.new { c.io_loop }
+        sleep(1) until worked
 
-        sleep(1) until welcome
-        assert(true, welcome)
+        assert(worked)
     end
 end
 
