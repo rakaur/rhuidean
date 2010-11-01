@@ -20,7 +20,7 @@ class Client
                   :nickname, :username, :realname, :bind_to
 
     # Our TCPSocket.
-    attr_reader   :socket, :channels
+    attr_reader   :socket
 
     # A simple Exeption class.
     class Error < Exception
@@ -55,9 +55,6 @@ class Client
         # Is our socket dead?
         @dead      = false
         @connected = false
-
-        # List of channels we're on
-        @channels = []
 
         # Received data waiting to be parsed.
         @recvq = []
@@ -116,15 +113,6 @@ class Client
 
         # Track our nickname...
         on(:NICK) { |m| @nickname = m.target if m.origin_nick == @nickname }
-
-        # Track channels
-        on(:JOIN) { |m| @channels << m.target if m.origin_nick == @nickname }
-
-        on(:PART) do |m|
-            @channels.delete(m.target) if m.origin_nick == @nickname
-        end
-
-        on(:KICK) { |m| @channels.delete(m.target) if m.params[0] == @nickname }
 
         self
     end
