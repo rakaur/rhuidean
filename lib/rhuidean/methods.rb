@@ -68,7 +68,7 @@ class Client
     end
 
     # Sends an IRC MODE command.
-    def mode(target, mode)
+    def mode(target, mode = '')
         @sendq << "MODE #{target} #{mode}"
     end
 

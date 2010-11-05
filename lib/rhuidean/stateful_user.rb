@@ -11,9 +11,16 @@
 module IRC
 
 class StatefulUser
-    attr_reader :nickname
+    attr_reader :channels, :modes
+    attr_writer :nickname
 
     def initialize(nickname)
+        # StatefulChannels we're on, keyed by name
+        @channels = {}
+
+        # Status modes on channels, keyed by channel name (:oper, :voice)
+        @modes = {}
+
         # The user's nickname
         @nickname = nickname
     end
@@ -24,6 +31,26 @@ class StatefulUser
 
     def to_s
         @nickname
+    end
+
+    def join_channel(channel)
+        @channels[channel.name] = channel
+    end
+
+    def part_channel(channel)
+        @modes.delete(channel.name)
+        @channels.delete(channel.name)
+    end
+
+    def add_status_mode(flag, channel)
+        if channel.class == StatefulChannel then channel = channel.name end
+        (@modes[channel] ||= []) << flag
+    end
+
+    def delete_status_mode(flag, channel)
+        if channel.class == StatefulChannel then channel = channel.name end
+        return unless @modes[channel]
+        @modes[channel].delete(flag)
     end
 end
 

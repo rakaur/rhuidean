@@ -11,7 +11,7 @@
 module IRC
 
 class StatefulChannel
-    attr_reader :modes, :name
+    attr_reader :modes, :name, :users
 
     #
     # Makes a new Channel that keeps track of itself.
@@ -20,9 +20,9 @@ class StatefulChannel
     # but it allows the Channel to post relevant events back to the client,
     # like mode changes.
     #
-    def initialize(name, eventq)
-        # Our EventQueue
-        @eventq = eventq
+    def initialize(name, client)
+        # The Client we belong to
+        @client = client
 
         # The channel's key
         @key = nil
@@ -36,8 +36,8 @@ class StatefulChannel
         # The name of the channel, including the prefix
         @name = name
 
-        # The list of StatefulUsers on the channel
-        @users = []
+        # The list of StatefulUsers on the channel keyed by nickname
+        @users = {}
     end
 
     ######
@@ -45,32 +45,36 @@ class StatefulChannel
     ######
 
     def add_user(user)
-        @users << user
+        @users[user.nickname] = user
+        user.join_channel(self)
     end
 
     def delete_user(user)
         if user.class == String
-            user = find_user(user)
+            @users[user].part_channel(self)
+            @users.delete(user)
+        elsif user.class == StatefulUser
+            user.part_channel(self)
+            @users.delete(user.nickname)
+        else
+            nil
         end
-
-        return nil if not user
-
-        @users.delete(user)
     end
 
     def find_user(nickname)
-        @users.find { |u| u.nickname == nick }
+        @users[nickname]
     end
 
     def to_s
         @name
     end
 
-    STATUS_MODES = { 'b' => :ban,
-                     'e' => :except,
-                     'I' => :invex,
-                     'o' => :oper,
+    STATUS_MODES = { 'o' => :oper,
                      'v' => :voice }
+
+    LIST_MODES   = { 'b' => :ban,
+                     'e' => :except,
+                     'I' => :invex }
 
     PARAM_MODES  = { 'l' => :limited,
                      'k' => :keyed }
@@ -82,7 +86,9 @@ class StatefulChannel
                      's' => :secret,
                      't' => :topic_lock }
 
-    def parse_modes(chan, modes, params)
+    # STATUS_MODES, LIST_MODES, PARAM_MODES, BOOL_MODES = {}, {}, {}, {}
+
+    def parse_modes(modes, params)
         mode = nil # :add or :del
 
         modes.each_char do |c|
@@ -100,29 +106,55 @@ class StatefulChannel
             if STATUS_MODES.include?(c)
                 flag  = STATUS_MODES[c]
                 param = params.shift
-            end
+
+            # Status modes from RPL_ISUPPORT
+            elsif @client.status_modes.keys.include?(c)
+                flag  = c.to_sym
+                param = params.shift
+
+            # List modes
+            elsif LIST_MODES.include?(c)
+                flag  = LIST_MODES[c]
+                param = params.shift
+
+            # List modes from RPL_ISUPPORT
+            elsif @client.channel_modes[:list].include?(c)
+                flag  = c.to_sym
+                param = params.shift
 
             # Always has a param (some send the key, some send '*')
-            if c == 'k'
+            elsif c == 'k'
                 flag  = :keyed
                 param = params.shift
                 @key  = mode == :add ? param : nil
-            end
 
             # Has a param when +, doesn't when -
-            if c == 'l'
+            elsif c == 'l'
                 flag   = :limited
                 param  = params.shift if mode == :add
                 @limit = mode == :add ? param : 0
-            end
 
-            # And the rest
-            if BOOL_MODES.include?(c)
+            # Always has a param from RPL_ISUPPORT
+            elsif @client.channel_modes[:always].include?(c)
+                flag  = c.to_sym
+                param = params.shift
+
+            # Has a parm when +, doesn't when - from RPL_ISUPPORT
+            elsif @client.channel_modes[:set].include?(c)
+                flag  = c.to_sym
+                param = params.shift if mode == :add
+
+            # The rest, no param
+            elsif BOOL_MODES.include?(c)
                 flag = BOOL_MODES[c]
+
+            # The rest, no param from RPL_ISUPPORT
+            elsif @client.channel_modes[:bool].include?(c)
+                flag = c.to_sym
             end
 
-            # Okay, now add non-status modes to the channel's modes
-            if BOOL_MODES.include?(c) or PARAM_MODES.include?(c)
+            # Add non-status and non-list modes to the channel's modes
+            unless junk_cmode?(c)
                 if mode == :add
                     @modes << flag
                 else
@@ -130,10 +162,33 @@ class StatefulChannel
                 end
             end
 
-            # And send out events for everything else
+            # Update status modes for users
+            if status_mode?(c)
+                if mode == :add
+                    @users[param].add_status_mode(flag, self)
+                elsif mode == :del
+                    @users[param].delete_status_mode(flag, self)
+                end
+            end
+
+            # And send out events for everything
             event = "mode_#{flag.to_s}".to_sym
-            @eventq.post(event, chan, mode, param)
+            @client.eventq.post(event, @name, mode, param)
         end
+    end
+
+    def status_mode?(modechar)
+        return true if STATUS_MODES.include?(modechar)
+        return true if @client.status_modes.keys.include?(modechar)
+        return false
+    end
+
+    def junk_cmode?(modechar)
+        return true if STATUS_MODES.include?(modechar)
+        return true if LIST_MODES.include?(modechar)
+        return true if @client.channel_modes[:list].include?(modechar)
+        return true if @client.status_modes.keys.include?(modechar)
+        return false
     end
 end
 

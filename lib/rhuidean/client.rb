@@ -397,6 +397,10 @@ class Client
         user(@username, @server, @server, @realname)
     end
 
+    def to_s
+        "#{@nickname}:#{self.object_id}"
+    end
+
     #
     # Logs a regular message.
     # ---
