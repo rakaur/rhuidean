@@ -44,6 +44,10 @@ class StatefulChannel
     public
     ######
 
+    def to_s
+        @name
+    end
+
     def add_user(user)
         @users[user.nickname] = user
         user.join_channel(self)
@@ -59,14 +63,6 @@ class StatefulChannel
         else
             nil
         end
-    end
-
-    def find_user(nickname)
-        @users[nickname]
-    end
-
-    def to_s
-        @name
     end
 
     STATUS_MODES = { 'o' => :oper,
