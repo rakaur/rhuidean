@@ -11,11 +11,12 @@
 module IRC
 
 class StatefulClient < Client
-    attr_reader :channels, :channel_modes, :eventq, :status_modes, :users
+    attr_reader :casemapping, :channels, :channel_modes, :eventq, :status_modes
+    attr_reader :users
 
     def initialize
         # StatefulChannels keyed by channel name
-        @channels = IRCHash.new
+        @channels = IRCHash.new(:rfc)
 
         # Additional channel modes from RPL_ISUPPORT
         @channel_modes = {}
@@ -24,7 +25,7 @@ class StatefulClient < Client
         @status_modes = {}
 
         # StatefulUsers we know about, keyed by nickname
-        @users = IRCHash.new
+        @users = IRCHash.new(:rfc)
 
         super
     end
@@ -95,9 +96,13 @@ class StatefulClient < Client
             # CASEMAPPING=rfc1459
             when 'CASEMAPPING'
                 if value == "rfc1459"
-                    IRCHash.casemapping = :rfc
+                    @casemapping = :rfc
+                    @channels    = IRCHash.new(:rfc)
+                    @users       = IRCHash.new(:rfc)
                 elsif value == "ascii"
-                    IRCHash.casemapping = :ascii
+                    @casemapping = :ascii
+                    @channels    = IRCHash.new(:ascii)
+                    @users       = IRCHash.new(:ascii)
                 end
 
             # CHANMODES=eIb,k,l,imnpst
@@ -131,7 +136,8 @@ class StatefulClient < Client
             @channels[m.target] = StatefulChannel.new(m.target, self)
             mode(m.target) # Get the channel modes
         else
-            user = @users[m.origin_nick] || StatefulUser.new(m.origin_nick)
+            nick = m.origin_nick
+            user = @users[nick] || StatefulUser.new(nick, self)
             @users[user.nickname] ||= user
 
             @channels[m.target].add_user(user)
@@ -222,7 +228,7 @@ class StatefulClient < Client
 
         names.each do |name|
             m      = name_re.match(name)
-            user   = @users[m[2]] || StatefulUser.new(m[2])
+            user   = @users[m[2]] || StatefulUser.new(m[2], self)
             prefix = m[1]
 
             @users[user.nickname] ||= user
@@ -256,27 +262,24 @@ end # module IRC
 # another layer of abstraction it'll have to stay this way...
 #
 class IRCHash < Hash
-    # For CASEMAPPING from RPL_ISUPPORT (:rfc or :ascii)
-    @@casemapping = :rfc
+    def initialize(casemapping)
+        @casemapping = casemapping
 
-    def IRCHash.casemapping=(value)
-        @@casemapping = value
+        super()
     end
 
     def [](key)
         key = irc_downcase(key)
-        puts "looking up key #{key}"
         super(key)
     end
 
     def []=(key, value)
         key = irc_downcase(key)
-        puts "setting #{key} to #{value}"
         super(key, value)
     end
 
     def irc_downcase(string)
-        if @@casemapping == :rfc
+        if @casemapping == :rfc
             string.downcase.tr('{}|^', '[]\\~')
         else
             string

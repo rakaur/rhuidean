@@ -37,7 +37,7 @@ class StatefulChannel
         @name = name
 
         # The list of StatefulUsers on the channel keyed by nickname
-        @users = IRCHash.new
+        @users = IRCHash.new(@client.casemapping)
     end
 
     ######
