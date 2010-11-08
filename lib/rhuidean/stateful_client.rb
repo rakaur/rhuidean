@@ -18,6 +18,9 @@ class StatefulClient < Client
         # StatefulChannels keyed by channel name
         @channels = IRCHash.new(:rfc)
 
+        # Known channel types, from RPL_ISUPPORT
+        @channel_types = %w(# &)
+
         # Additional channel modes from RPL_ISUPPORT
         @channel_modes = {}
 
@@ -70,7 +73,7 @@ class StatefulClient < Client
 
         # Parse and sync channel modes
         on(:MODE) do |m|
-            next unless m.target[0] == '#'
+            next unless @channel_types.include?(m.target[0])
             @channels[m.target].parse_modes(m.params[0], m.params[1..-1])
         end
 
@@ -114,6 +117,10 @@ class StatefulClient < Client
                 @channel_modes[:always] = alwaysp.split('')
                 @channel_modes[:set]    = setp.split('')
                 @channel_modes[:bool]   = nop.split('')
+
+            # CHANTYPES=&#
+            when 'CHANTYPES'
+                @channel_types = value.split('')
 
             # PREFIX=(ov)@+
             when 'PREFIX'
