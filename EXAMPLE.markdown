@@ -37,6 +37,10 @@ We'll start with `IRC::Client`. Anything done here can also be done with
         c.port     = 6667
         c.password = "optional_password"
 
+        c.nickname = "rhuidean-bot"
+        c.username = "rhuidean"
+        c.realname = "built by the Jenn Aiel"
+
         # These provide basic logging. Debug shows all network traffic.
         # Debug is true or false, logger is false or a Logger object.
         c.logger   = Logger.new($stdout)
@@ -127,16 +131,16 @@ It's worth noting that `IRC::StatefulClient` offers more events, particularly
 in terms of channel modes. It keeps track of channel modes, and so must parse
 them. As it does so it also sends off mode-specific events, like:
 
-    client.on(:mode_secret) do |chan, mode, param|
+    client.on(:mode_secret) do |m, mode, param|
         if mode == :add
-             client.privmsg(chan, "We're hidden!")
+             client.privmsg(m.target, "We're hidden!")
         elsif mode == :del
-            client.privmsg(chan, "We're not hidden :(")
+            client.privmsg(m.target, "We're not hidden :(")
        end
     end
 
 As you can see, these special mode events don't send the standard `IRC::Message`
-object. `chan` is the channel name, `mode` is :add or :del depending on if the
+object. `m` is that object , `mode` is :add or :del depending on if the
 mode is being added or removed, and `param` is the parameter, if there is one.
 In this case, there is not, but if it were :limited the param would be the
 number it's limited to.

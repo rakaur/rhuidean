@@ -104,12 +104,12 @@ class StatefulClient < Client
         # Parse and sync channel modes
         on(:MODE) do |m|
             next unless @channel_types.include?(m.target[0])
-            @channels[m.target].parse_modes(m.params[0], m.params[1..-1])
+            @channels[m.target].parse_modes(m, m.params[0], m.params[1..-1])
         end
 
         # Parse reply from MODE
         on(Numeric::RPL_CHANNELMODEIS) do |m|
-            @channels[m.params[0]].parse_modes(m.params[1], m.params[2..-1])
+            @channels[m.params[0]].parse_modes(m, m.params[1], m.params[2..-1])
         end
 
         # Sync current users in channel

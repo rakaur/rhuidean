@@ -121,11 +121,12 @@ class StatefulChannel
     # Parse a mode string.
     # Update channel state for modes we know, and fire off events.
     # ---
+    # m:: the IRC::Message object
     # modes:: the mode string
     # params:: an array of the params tokenized by space
     # returns:: nothing of consequence...
     #
-    def parse_modes(modes, params)
+    def parse_modes(m, modes, params)
         mode = nil # :add or :del
 
         modes.each_char do |c|
@@ -210,7 +211,7 @@ class StatefulChannel
 
             # And send out events for everything
             event = "mode_#{flag.to_s}".to_sym
-            @client.eventq.post(event, @name, mode, param)
+            @client.eventq.post(event, m, mode, param)
         end
     end
 
