@@ -244,7 +244,7 @@ class StatefulClient < Client
         else
             user = @users[m.origin_nick]
 
-            user.channels.each { |chan| chan.delete_user(user) }
+            user.channels.each { |name, chan| chan.delete_user(user) }
 
             delete_user(user)
             debug("quit: #{user.nickname}")

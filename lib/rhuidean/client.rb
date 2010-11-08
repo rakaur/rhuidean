@@ -313,6 +313,10 @@ class Client
         @logger.debug(caller[0].split('/')[-1]) { message } if @debug
     end
 
+    ######
+    public
+    ######
+
     #
     # Sets the logging object to use.
     # If it quacks like a Logger object, it should work.
@@ -333,10 +337,6 @@ class Client
         # object to show all levels. I might change this someday.
         @logger.level = Logger::DEBUG
     end
-
-    ######
-    public
-    ######
 
     #
     # Registers Event handlers with our EventQueue.
