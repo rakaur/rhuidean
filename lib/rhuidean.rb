@@ -14,7 +14,7 @@ module Rhuidean
     VERSION  = "#{V_MAJOR}.#{V_MINOR}.#{V_PATCH}"
 end
 
-# Import required rhuidean modules.
+# Import required app modules
 %w(client event methods numeric timer).each do |m|
     require 'rhuidean/' + m
 end

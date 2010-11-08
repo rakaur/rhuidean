@@ -10,10 +10,22 @@
 
 module IRC
 
+##
+# A +StatefulClient+ builds on +Client+ and tracks everything
+# it does. This is useful for getting a head start on a bot.
+#
 class StatefulClient < Client
+
+    ##
+    # instance attributes
     attr_reader :casemapping, :channels, :channel_modes, :eventq, :status_modes
     attr_reader :users
 
+    ##
+    # Creates a new +StatefulClient+.
+    # ---
+    # returns:: +self+
+    #
     def initialize
         # StatefulChannels keyed by channel name
         @channels = IRCHash.new(:rfc)
@@ -37,15 +49,32 @@ class StatefulClient < Client
     public
     ######
 
+    #
+    # Adds a +StatefulUser+ to our known-users list.
+    # ---
+    # user:: a +StatefulUser+
+    # returns:: +self+
+    #
     def add_user(user)
         @users[user.nickname] = user
+
+        self
     end
 
+    #
+    # Removes a +StatefulUser+ from our known-users list, usually
+    # so it can die and be eaten by the GC.
+    # ---
+    # user:: either a +StatefulUser+ or the name of one
+    # returns:: +self+ (nil on catestrophic failure)
+    #
     def delete_user(user)
         if user.class == String
             @users.delete(user)
+            self
         elsif user.class == StatefulUser
             @users.delete(user.nickname)
+            self
         else
             nil
         end
@@ -57,6 +86,7 @@ class StatefulClient < Client
 
     PREFIX_RE = /^\((\w+)\)(.*)$/
 
+    # Set up our event handlers
     def set_default_handlers
         on(:dead) do
             @channels.clear
@@ -88,6 +118,7 @@ class StatefulClient < Client
         super
     end
 
+    # Parse RPL_ISUPPORT to make us smarter!
     def do_rpl_isupport(m)
         supported = []
 
@@ -259,15 +290,7 @@ end
 
 end # module IRC
 
-#
 # So we don't have to do @channels[irc_downcase(name)] constantly
-#
-# This is technically broken.
-# There's no easy way to keep casemapping state per-Client, and this
-# makes it pick one casemapping for ALL Clients. No one class knows
-# enough about anything to always know the state, so unless I add
-# another layer of abstraction it'll have to stay this way...
-#
 class IRCHash < Hash
     def initialize(casemapping)
         @casemapping = casemapping

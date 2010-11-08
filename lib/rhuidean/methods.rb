@@ -7,6 +7,12 @@
 
 module IRC
 
+#
+# These methods are shortcuts for sending data to the IRC
+# server. You can use `raw` to do any of them, or even add
+# a string directly to `@sendq` if you really want. I'm sure
+# I haven't thought of everything here.
+#
 class Client
     ######
     public

@@ -10,15 +10,25 @@
 
 module IRC
 
+##
+# Represents a channel on IRC.
+#
 class StatefulChannel
+
+    ##
+    # instance attributes
     attr_reader :modes, :name, :users
 
-    #
-    # Makes a new Channel that keeps track of itself.
-    # The channel has an EventQueue, but it really points to the EventQueue of
-    # the IRC::StatefulClient that created it. This kind of breaks OOP,
+    ##
+    # Creates a new +StatefulChannel+.
+    # The channel has an +EventQueue+, but it really points to the EventQueue of
+    # the +StatefulClient+ that created it. This kind of breaks OOP,
     # but it allows the Channel to post relevant events back to the client,
     # like mode changes.
+    # ---
+    # name:: the name of the channel
+    # client:: the +IRC::Client+ that sees us
+    # returns:: +self+
     #
     def initialize(name, client)
         # The Client we belong to
@@ -44,22 +54,47 @@ class StatefulChannel
     public
     ######
 
+    #
+    # Represent ourselves in a string.
+    # ---
+    # returns:: our name
+    #
     def to_s
         @name
     end
 
+    #
+    # Add a user to our userlist.
+    # This also adds us to the user's channel list.
+    # ---
+    # user:: the +StatefulUser+ to add
+    # returns:: +self+
+    #
     def add_user(user)
         @users[user.nickname] = user
         user.join_channel(self)
+
+        self
     end
 
+    #
+    # Remove a user from our userlist.
+    # This also removes us from the user's channel list.
+    # ---
+    # user:: a +StatefulUser+ or the name of one
+    # returns:: +self+ (nil on catastrophic failure)
+    #
     def delete_user(user)
         if user.class == String
             @users[user].part_channel(self)
             @users.delete(user)
+
+            self
         elsif user.class == StatefulUser
             user.part_channel(self)
             @users.delete(user.nickname)
+
+            self
         else
             nil
         end
@@ -82,8 +117,14 @@ class StatefulChannel
                      's' => :secret,
                      't' => :topic_lock }
 
-    # STATUS_MODES, LIST_MODES, PARAM_MODES, BOOL_MODES = {}, {}, {}, {}
-
+    #
+    # Parse a mode string.
+    # Update channel state for modes we know, and fire off events.
+    # ---
+    # modes:: the mode string
+    # params:: an array of the params tokenized by space
+    # returns:: nothing of consequence...
+    #
     def parse_modes(modes, params)
         mode = nil # :add or :del
 
@@ -172,6 +213,10 @@ class StatefulChannel
             @client.eventq.post(event, @name, mode, param)
         end
     end
+
+    #######
+    private
+    #######
 
     def status_mode?(modechar)
         return true if STATUS_MODES.include?(modechar)
