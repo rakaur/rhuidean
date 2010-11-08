@@ -15,7 +15,7 @@ class StatefulClient < Client
 
     def initialize
         # StatefulChannels keyed by channel name
-        @channels = {}
+        @channels = IRCHash.new
 
         # Additional channel modes from RPL_ISUPPORT
         @channel_modes = {}
@@ -24,7 +24,7 @@ class StatefulClient < Client
         @status_modes = {}
 
         # StatefulUsers we know about, keyed by nickname
-        @users = {}
+        @users = IRCHash.new
 
         super
     end
@@ -55,8 +55,8 @@ class StatefulClient < Client
 
     def set_default_handlers
         on(:dead) do
-            @channels = {}
-            @users    = {}
+            @channels.clear
+            @users.clear
         end
 
         on(Numeric::RPL_ISUPPORT) { |m| do_rpl_isupport(m) }
@@ -91,6 +91,14 @@ class StatefulClient < Client
 
         supported.each do |name, value|
             case name
+
+            # CASEMAPPING=rfc1459
+            when 'CASEMAPPING'
+                if value == "rfc1459"
+                    IRCHash.casemapping = :rfc
+                elsif value == "ascii"
+                    IRCHash.casemapping = :ascii
+                end
 
             # CHANMODES=eIb,k,l,imnpst
             # Fields are: list param, always param, param when +, no param
@@ -219,7 +227,7 @@ class StatefulClient < Client
 
             @users[user.nickname] ||= user
 
-            elsif prefix == '@'
+            if prefix == '@'
                 user.add_status_mode(:oper, chan)
 
             elsif prefix == '+'
@@ -237,4 +245,42 @@ class StatefulClient < Client
 end
 
 end # module IRC
+
+#
+# So we don't have to do @channels[irc_downcase(name)] constantly
+#
+# This is technically broken.
+# There's no easy way to keep casemapping state per-Client, and this
+# makes it pick one casemapping for ALL Clients. No one class knows
+# enough about anything to always know the state, so unless I add
+# another layer of abstraction it'll have to stay this way...
+#
+class IRCHash < Hash
+    # For CASEMAPPING from RPL_ISUPPORT (:rfc or :ascii)
+    @@casemapping = :rfc
+
+    def IRCHash.casemapping=(value)
+        @@casemapping = value
+    end
+
+    def [](key)
+        key = irc_downcase(key)
+        puts "looking up key #{key}"
+        super(key)
+    end
+
+    def []=(key, value)
+        key = irc_downcase(key)
+        puts "setting #{key} to #{value}"
+        super(key, value)
+    end
+
+    def irc_downcase(string)
+        if @@casemapping == :rfc
+            string.downcase.tr('{}|^', '[]\\~')
+        else
+            string
+        end
+    end
+end
 

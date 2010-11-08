@@ -11,12 +11,12 @@
 module IRC
 
 class StatefulUser
-    attr_reader :channels, :modes
-    attr_writer :nickname
+    attr_reader  :channels, :modes
+    attr_accessor :nickname
 
     def initialize(nickname)
         # StatefulChannels we're on, keyed by name
-        @channels = {}
+        @channels = IRCHash.new
 
         # Status modes on channels, keyed by channel name (:oper, :voice)
         @modes = {}

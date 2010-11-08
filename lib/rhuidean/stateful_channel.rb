@@ -37,7 +37,7 @@ class StatefulChannel
         @name = name
 
         # The list of StatefulUsers on the channel keyed by nickname
-        @users = {}
+        @users = IRCHash.new
     end
 
     ######
