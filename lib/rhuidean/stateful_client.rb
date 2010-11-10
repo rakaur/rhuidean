@@ -208,10 +208,21 @@ class StatefulClient < Client
     end
 
     def do_nick(m)
+        # Get the user object
         user = @users[m.origin_nick]
+
+        # Rename it, rekey it, and delete the old one
         user.nickname = m.target
         @users[m.target] = user
         @users.delete(m.origin_nick)
+
+        # We have to rekey it on channel lists, too
+        user.channels.each do |name, channel|
+            channel.users[m.target] = user
+            channel.users.delete(m.origin_nick)
+        end
+
+        debug("nick: #{m.origin_nick} -> #{m.target}")
     end
 
     def do_kick(m)
