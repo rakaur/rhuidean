@@ -30,7 +30,7 @@ offers a different event for each mode flag, as opposed to just an event for
 MODE, since it has to parse the modes anyway).
 
 We'll start with `IRC::Client`. Anything done here can also be done with
-`IRC::StatefulClient`, though.
+`IRC::StatefulClient`, though, as long as you `require rhuidean/stateful_client`
 
     client = IRC::Client.new do |c|
         c.server   = "irc.example.com"

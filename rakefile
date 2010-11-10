@@ -11,6 +11,7 @@
 end
 
 $: << Dir.getwd
+$: << 'lib'
 
 require 'lib/rhuidean'
 
