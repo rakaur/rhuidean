@@ -27,7 +27,7 @@ module Loggable
     # returns:: +self+
     #
     def logger=(logger)
-        logger.level = @logger.level if @logger
+        logger.level = @logger.level if @logger and logger
 
         @logger = logger
 
