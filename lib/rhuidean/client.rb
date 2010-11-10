@@ -8,15 +8,19 @@
 # Import required Ruby modules
 %w(logger socket).each { |m| require m }
 
+# Import required application modules
+%w(loggable).each { |m| require 'rhuidean/' + m }
+
 module IRC
 
 # The IRC::Client class acts as an abstract interface to the IRC protocol.
 class Client
     include Rhuidean # Version info and such
+    include Loggable # Magic logging stuff
 
     ##
     # instance attributes
-    attr_accessor :server,   :port,     :password, :debug, :thread,
+    attr_accessor :server,   :port,     :password, :thread,
                   :nickname, :username, :realname, :bind_to
 
     # Our TCPSocket.
@@ -40,7 +44,7 @@ class Client
     #     c.bind_to  = '10.0.1.20'
     #
     #     c.logger    = Logger.new($stderr)
-    #     c.debug     = false
+    #     c.log_level = :debug
     # end
     #
     # client.thread = Thread.new { client.io_loop }
@@ -66,8 +70,8 @@ class Client
         @eventq = EventQueue.new
 
         # Our Logger object.
-        @logger  = Logger.new($stderr)
-        @debug   = false
+        @logger        = Logger.new($stderr)
+        self.log_level = :info
 
         # If we have a block let it set up our instance attributes.
         yield(self) if block_given?
@@ -80,7 +84,7 @@ class Client
         on(:dead) { self.dead = true }
 
         on(:exit) do |from|
-            log("exiting via #{from}...")
+            log(:fatal, "exiting via #{from}...")
             Thread.exit
         end
 
@@ -115,7 +119,7 @@ class Client
         end
 
         # Consider ourselves connected on 001
-        on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
+        on(Numeric::RPL_WELCOME) { log(:info, "connected to #@server:#@port") }
 
         # Track our nickname...
         on(:NICK) { |m| @nickname = m.target if m.origin_nick == @nickname }
@@ -168,7 +172,7 @@ class Client
     #
     def dead=(bool)
         if bool == true
-            log("lost connection to #@server:#@port")
+            log(:info, "lost connection to #@server:#@port")
             @dead      = Time.now.to_i
             @socket    = nil
             @connected = false
@@ -223,7 +227,7 @@ class Client
             # Use shift because we need it to fall off immediately.
             while line = @sendq.shift
                 line += "\r\n"
-                debug(line)
+                log(:debug, line)
                 @socket.write(line)
             end
         rescue Errno::EAGAIN
@@ -271,7 +275,7 @@ class Client
         @recvq.each do |line|
             line.chomp!
 
-            debug(line)
+            log(:debug, line)
 
             m = IRC_RE.match(line)
 
@@ -297,52 +301,9 @@ class Client
         self
     end
 
-    #
-    # Logs a regular message.
-    # ---
-    # message:: the string to log
-    # returns:: +self+
-    #
-    def log(message)
-        @logger.info(caller[0].split('/')[-1]) { message } if @logger
-    end
-
-    #
-    # Logs a debug message.
-    # ---
-    # message:: the string to log
-    # returns:: +self+
-    #
-    def debug(message)
-        return unless @logger
-
-        @logger.debug(caller[0].split('/')[-1]) { message } if @debug
-    end
-
     ######
     public
     ######
-
-    #
-    # Sets the logging object to use.
-    # If it quacks like a Logger object, it should work.
-    # ---
-    # logger:: the Logger to use
-    # returns:: +self+
-    #
-    def logger=(logger)
-        @logger = logger
-
-        # Set to false/nil to disable logging...
-        return unless @logger
-
-        @logger.progname        = 'irc'
-        @logger.datetime_format = '%b %d %H:%M:%S '
-
-        # We only have 'logging' and 'debugging', so just set the
-        # object to show all levels. I might change this someday.
-        @logger.level = Logger::DEBUG
-    end
 
     #
     # Registers Event handlers with our EventQueue.
@@ -430,7 +391,7 @@ class Client
     def connect
         verify_attributes
 
-        log("connecting to #@server:#@port")
+        log(:info, "connecting to #@server:#@port")
 
         begin
             @socket = TCPSocket.new(@server, @port, @bind_to)

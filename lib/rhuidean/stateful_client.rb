@@ -179,7 +179,7 @@ class StatefulClient < Client
             @users[user.nickname] ||= user
 
             @channels[m.target].add_user(user)
-            debug("join: #{user} -> #{m.target}")
+            log(:info, "join: #{user} -> #{m.target}")
         end
     end
 
@@ -196,12 +196,12 @@ class StatefulClient < Client
 
             @channels.delete(chan.name)
 
-            debug("parted: #{chan.name}")
+            log(:info, "parted: #{chan.name}")
         else
             user = @users[m.origin_nick]
 
             @channels[m.target].delete_user(user)
-            debug("part: #{user.nickname} -> #{m.origin_nick}")
+            log(:info, "part: #{user.nickname} -> #{m.origin_nick}")
 
             delete_user(user) if user.channels.empty?
         end
@@ -222,7 +222,7 @@ class StatefulClient < Client
             channel.users.delete(m.origin_nick)
         end
 
-        debug("nick: #{m.origin_nick} -> #{m.target}")
+        log(:info, "nick: #{m.origin_nick} -> #{m.target}")
     end
 
     def do_kick(m)
@@ -238,12 +238,12 @@ class StatefulClient < Client
 
             @channels.delete(chan.name)
 
-            debug("kicked: #{chan.name}")
+            log(:info, "kicked: #{chan.name}")
         else
             user = @users[m.params[0]]
 
             @channels[m.target].delete_user(user)
-            debug("kick: #{user.nickname} -> #{m.origin_nick}")
+            log(:info, "kick: #{user.nickname} -> #{m.origin_nick}")
 
             delete_user(user) if user.channels.empty?
         end
@@ -258,7 +258,7 @@ class StatefulClient < Client
             user.channels.each { |name, chan| chan.delete_user(user) }
 
             delete_user(user)
-            debug("quit: #{user.nickname}")
+            log(:info, "quit: #{user.nickname}")
         end
     end
 
@@ -273,7 +273,7 @@ class StatefulClient < Client
         names[0] = names[0][1..-1] # Get rid of leading ':'
         modes    = @status_modes.keys
         prefixes = @status_modes.values
-        name_re  = /^([#{prefixes}])*(.+)/
+        name_re  = /^([#{prefixes.join('')}])*(.+)/
 
         names.each do |name|
             m      = name_re.match(name)
@@ -294,7 +294,7 @@ class StatefulClient < Client
             end
 
             chan.add_user(user)
-            debug("names: #{user} -> #{chan}")
+            log(:debug, "names: #{user} -> #{chan}")
         end
     end
 end

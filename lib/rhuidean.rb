@@ -8,7 +8,7 @@
 module Rhuidean
     # Version number
     V_MAJOR  = 1
-    V_MINOR  = 0
+    V_MINOR  = 1
     V_PATCH  = 0
 
     VERSION  = "#{V_MAJOR}.#{V_MINOR}.#{V_PATCH}"

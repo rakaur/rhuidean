@@ -42,9 +42,10 @@ We'll start with `IRC::Client`. Anything done here can also be done with
         c.realname = "built by the Jenn Aiel"
 
         # These provide basic logging. Debug shows all network traffic.
-        # Debug is true or false, logger is false or a Logger object.
-        c.logger   = Logger.new($stdout)
-        c.debug    = false
+        # Logger can be set to false to turn off logging.
+        # Log level is one of :fatal, :error, :warning, :info, :debug
+        c.logger       = Logger.new($stdout)
+        c.log_level    = :info
     end
 
 Now you have an `IRC::Client`. You can use the client to listen to events so
