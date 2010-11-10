@@ -24,10 +24,13 @@ and it also offers clever ways of accomplishing basic and advanced tasks.
 The current active development/maintenance is done by:
 
 - rakaur, Eric Will <rakaur@malkier.net>
-- sycobuny, Stephen Belcher <sycobuny@malkier.net>
 
-Almost all of the testing was also done by us. I (rakaur) wrote all of the base
-code, and sycobuny has expanded on it with more in-depth classes.
+Almost all of the testing was also done by me, with help from:
+
+- sycobuny, Stephen Belcher <sycobuny@malkier.net>
+- dKingston, Michael Rodriguez <dkingston@malkier.net>
+
+And others on irc.malkier.net.
 
 2. INSTALLATION
 ---------------

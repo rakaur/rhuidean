@@ -5,16 +5,14 @@
 # Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
 #
 
-# Import required Ruby modules.
+# Import required Ruby modules
 %w(logger socket).each { |m| require m }
 
 module IRC
 
 # The IRC::Client class acts as an abstract interface to the IRC protocol.
 class Client
-    ##
-    # constants
-    VERSION = '0.2.7'
+    include Rhuidean # Version info and such
 
     ##
     # instance attributes
@@ -22,7 +20,7 @@ class Client
                   :nickname, :username, :realname, :bind_to
 
     # Our TCPSocket.
-    attr_reader   :socket, :channels
+    attr_reader   :socket
 
     # A simple Exeption class.
     class Error < Exception
@@ -57,9 +55,6 @@ class Client
         # Is our socket dead?
         @dead      = false
         @connected = false
-
-        # List of channels we're on
-        @channels = []
 
         # Received data waiting to be parsed.
         @recvq = []
@@ -118,15 +113,6 @@ class Client
 
         # Track our nickname...
         on(:NICK) { |m| @nickname = m.target if m.origin_nick == @nickname }
-
-        # Track channels
-        on(:JOIN) { |m| @channels << m.target if m.origin_nick == @nickname }
-
-        on(:PART) do |m|
-            @channels.delete(m.target) if m.origin_nick == @nickname
-        end
-
-        on(:KICK) { |m| @channels.delete(m.target) if m.params[0] == @nickname }
 
         self
     end
@@ -197,7 +183,7 @@ class Client
             ret = nil # Dead
         end
 
-        unless ret
+        if not ret or ret.empty?
             @eventq.post(:dead)
             return
         end
@@ -236,6 +222,9 @@ class Client
             end
         rescue Errno::EAGAIN
             retry
+        rescue Exception
+            @eventq.post(:dead)
+            return
         end
     end
 
@@ -302,9 +291,52 @@ class Client
         self
     end
 
+    #
+    # Logs a regular message.
+    # ---
+    # message:: the string to log
+    # returns:: +self+
+    #
+    def log(message)
+        @logger.info(caller[0].split('/')[-1]) { message } if @logger
+    end
+
+    #
+    # Logs a debug message.
+    # ---
+    # message:: the string to log
+    # returns:: +self+
+    #
+    def debug(message)
+        return unless @logger
+
+        @logger.debug(caller[0].split('/')[-1]) { message } if @debug
+    end
+
     ######
     public
     ######
+
+    #
+    # Sets the logging object to use.
+    # If it quacks like a Logger object, it should work.
+    # ---
+    # logger:: the Logger to use
+    # returns:: +self+
+    #
+    def logger=(logger)
+        @logger = logger
+
+        # Set to false/nil to disable logging...
+        return unless @logger
+
+        @logger.progname        = 'irc'
+        @logger.datetime_format = '%b %d %H:%M:%S '
+
+        # We only have 'logging' and 'debugging', so just set the
+        # object to show all levels. I might change this someday.
+        @logger.level = Logger::DEBUG
+    end
 
     #
     # Registers Event handlers with our EventQueue.
@@ -327,7 +359,7 @@ class Client
     end
 
     #
-    # Schedules input/output and runs the EventQueue.
+    # Schedules input/output and runs the +EventQueue+.
     # ---
     # returns:: never, thread dies on +:exit+
     #
@@ -409,46 +441,12 @@ class Client
     end
 
     #
-    # Logs a regular message.
+    # Represent ourselves in a string.
     # ---
-    # message:: the string to log
-    # returns:: +self+
+    # returns:: our nickname and object ID
     #
-    def log(message)
-        @logger.info(caller[0].split('/')[-1]) { message } if @logger
-    end
-
-    #
-    # Logs a debug message.
-    # ---
-    # message:: the string to log
-    # returns:: +self+
-    #
-    def debug(message)
-        return unless @logger
-
-        @logger.debug(caller[0].split('/')[-1]) { message } if @debug
-    end
-
-    #
-    # Sets the logging object to use.
-    # If it quacks like a Logger object, it should work.
-    # ---
-    # logger:: the Logger to use
-    # returns:: +self+
-    #
-    def logger=(logger)
-        @logger = logger
-
-        # Set to false/nil to disable logging...
-        return unless @logger
-
-        @logger.progname        = 'irc'
-        @logger.datetime_format = '%b %d %H:%M:%S '
-
-        # We only have 'logging' and 'debugging', so just set the
-        # object to show all levels. I might change this someday.
-        @logger.level = Logger::DEBUG
+    def to_s
+        "#{@nickname}:#{self.object_id}"
     end
 
     #
@@ -479,8 +477,23 @@ class Message
     # style of (char *origin, char *target, char *parv[]) in C.
     #
     def initialize(client, raw, origin, target, params)
-        @client, @ctcp, @origin = client, nil, origin
-        @params, @raw,  @target = params, raw, target
+        # The IRC::Client that processed this message
+        @client = client
+
+        # If this is a CTCP, the type of CTCP
+        @ctcp = nil
+
+        # The originator of the message. Sometimes server, sometimes n!u@h
+        @origin = origin
+
+        # A space-tokenized array of anything after a colon
+        @params = params
+
+        # The full string from the IRC server
+        @raw = raw
+
+        # Usually the intended recipient; usually a user or channel
+        @target = target
 
         # Is the origin a user? Let's make this a little more simple...
         if m = ORIGIN_RE.match(@origin)
@@ -498,19 +511,39 @@ class Message
     public
     ######
 
+    #
+    # Was the message sent to a channel?
+    # ---
+    # returns:: +true+ or +false+
+    #
     def to_channel?
         %w(# & !).include?(@target[0])
     end
 
-    def is_ctcp?
+    #
+    # Was the message formatted as a CTCP message?
+    # ---
+    # returns:: +true+ or +false+
+    #
+    def ctcp?
         @ctcp
     end
 
-    def is_action?
+    #
+    # Was the message formatted as a CTCP action?
+    # ---
+    # returns:: +true+ or +false+
+    #
+    def action?
         @ctcp == :action
     end
 
-    def is_dcc?
+    #
+    # Was the message formatted as a DCC notice?
+    # ---
+    # returns:: +true+ or +false+
+    #
+    def dcc?
         @ctcp == :dcc
     end
 end

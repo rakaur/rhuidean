@@ -5,7 +5,16 @@
 # Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
 #
 
-# Import required rhuidean modules.
+module Rhuidean
+    # Version number
+    V_MAJOR  = 1
+    V_MINOR  = 0
+    V_PATCH  = 0
+
+    VERSION  = "#{V_MAJOR}.#{V_MINOR}.#{V_PATCH}"
+end
+
+# Import required app modules
 %w(client event methods numeric timer).each do |m|
     require 'rhuidean/' + m
 end
