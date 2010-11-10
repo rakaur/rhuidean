@@ -108,6 +108,12 @@ class Client
     # returns:: +self+
     #
     def set_default_handlers
+        # Append random numbers if our nick is in use
+        on(Numeric::ERR_NICKNAMEINUSE) do |m|
+            @nickname = m.params[0] + rand(100).to_s
+            nick(@nickname)
+        end
+
         # Consider ourselves connected on 001
         on(Numeric::RPL_WELCOME) { log("connected to #@server:#@port") }
 
