@@ -233,7 +233,7 @@ class Client
             # Use shift because we need it to fall off immediately.
             while line = @sendq.shift
                 line += "\r\n"
-                log(:debug, line)
+                log(:debug, "<- #{line}")
                 @socket.write(line)
             end
         rescue Errno::EAGAIN
@@ -281,7 +281,7 @@ class Client
         @recvq.each do |line|
             line.chomp!
 
-            log(:debug, line)
+            log(:debug,"-> #{line}")
 
             m = IRC_RE.match(line)
 

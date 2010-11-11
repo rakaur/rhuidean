@@ -179,7 +179,7 @@ class StatefulClient < Client
             @users[user.nickname] ||= user
 
             @channels[m.target].add_user(user)
-            log(:info, "join: #{user} -> #{m.target}")
+            log(:info, "do_join(): #{user} -> #{m.target}")
         end
     end
 
@@ -196,12 +196,12 @@ class StatefulClient < Client
 
             @channels.delete(chan.name)
 
-            log(:info, "parted: #{chan.name}")
+            log(:info, "do_part(): #{chan.name}")
         else
             user = @users[m.origin_nick]
 
             @channels[m.target].delete_user(user)
-            log(:info, "part: #{user.nickname} -> #{m.origin_nick}")
+            log(:info, "do_part(): #{user.nickname} -> #{m.origin_nick}")
 
             delete_user(user) if user.channels.empty?
         end
@@ -222,7 +222,7 @@ class StatefulClient < Client
             channel.users.delete(m.origin_nick)
         end
 
-        log(:info, "nick: #{m.origin_nick} -> #{m.target}")
+        log(:info, "do_nick(): #{m.origin_nick} -> #{m.target}")
     end
 
     def do_kick(m)
@@ -238,12 +238,12 @@ class StatefulClient < Client
 
             @channels.delete(chan.name)
 
-            log(:info, "kicked: #{chan.name}")
+            log(:info, "do_kick(): #{chan.name}")
         else
             user = @users[m.params[0]]
 
             @channels[m.target].delete_user(user)
-            log(:info, "kick: #{user.nickname} -> #{m.origin_nick}")
+            log(:info, "do_kick(): #{user.nickname} -> #{m.origin_nick}")
 
             delete_user(user) if user.channels.empty?
         end
@@ -258,7 +258,7 @@ class StatefulClient < Client
             user.channels.each { |name, chan| chan.delete_user(user) }
 
             delete_user(user)
-            log(:info, "quit: #{user.nickname}")
+            log(:info, "do_quit(): #{user.nickname}")
         end
     end
 
@@ -294,7 +294,7 @@ class StatefulClient < Client
             end
 
             chan.add_user(user)
-            log(:debug, "names: #{user} -> #{chan}")
+            log(:debug, "do_rpl_namereply(): #{user} -> #{chan}")
         end
     end
 end
