@@ -69,6 +69,12 @@ class Client
         # Our event queue.
         @eventq = EventQueue.new
 
+        # Local IP to bind to
+        @bind_to = nil
+
+        # Password to login to the server
+        @password = nil
+
         # Our Logger object.
         @logger        = Logger.new($stderr)
         self.log_level = :info

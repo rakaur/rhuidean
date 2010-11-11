@@ -43,9 +43,23 @@ class Client
         @sendq << "PRIVMSG #{to} :#{message}"
     end
 
+    # Sends a CTCP
+    def ctcp(to, type, params = nil)
+        if params
+            @sendq << "PRIVMSG #{to} :\1#{type} #{params}\1"
+        else
+            @sendq << "PRIVMSG #{to} :\1#{type}\1"
+        end
+    end
+
     # Sends an IRC NOTICE command.
     def notice(to, message)
         @sendq << "NOTICE #{to} :#{message}"
+    end
+
+    # Sends a CTCP reply
+    def ctcp_reply(to, type, params = '')
+        @sendq << "NOTICE #{to} :\1#{type} #{params}\1"
     end
 
     # Sends an IRC JOIN command.
