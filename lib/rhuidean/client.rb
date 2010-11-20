@@ -232,8 +232,8 @@ class Client
         begin
             # Use shift because we need it to fall off immediately.
             while line = @sendq.shift
-                line += "\r\n"
                 log(:debug, "<- #{line}")
+                line += "\r\n"
                 @socket.write(line)
             end
         rescue Errno::EAGAIN
