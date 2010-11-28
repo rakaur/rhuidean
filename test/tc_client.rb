@@ -42,7 +42,6 @@ class TestClient < Test::Unit::TestCase
                 c.realname = 'rhuidean unit tester'
 
                 c.logger   = nil
-                c.debug    = false
             end
         end
 

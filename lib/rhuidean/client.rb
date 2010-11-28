@@ -192,14 +192,15 @@ class Client
     #
     def read
         begin
-            ret = @socket.readpartial(8192)
-        rescue Errno::EAGAIN
+            ret = @socket.read_nonblock(8192)
+        rescue IO::WaitReadable
             retry
-        rescue EOFError, SystemCallError
+        rescue Exception
             ret = nil # Dead
         end
 
         if not ret or ret.empty?
+            log(:info, "read error from #@server: #{e}") if e
             @eventq.post(:dead)
             return
         end
@@ -234,9 +235,9 @@ class Client
             while line = @sendq.shift
                 log(:debug, "<- #{line}")
                 line += "\r\n"
-                @socket.write(line)
+                @socket.write_nonblock(line)
             end
-        rescue Errno::EAGAIN
+        rescue IO::WaitReadable
             retry
         rescue Exception
             @eventq.post(:dead)
