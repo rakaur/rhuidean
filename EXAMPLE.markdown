@@ -73,7 +73,7 @@ Now let's take a closer look at events.
 For example, if you'd like to join a channel when it connects to the server,
 a good way is to wait for the MOTD and then join:
 
-    client.on(IRC::Numeric::RPL_ENDOFMOTD) { c.join("#example") }
+    client.on(IRC::Numeric::RPL_ENDOFMOTD) { client.join("#example") }
 
 Aside from numerics having funny names, it's pretty easy. If you'd like to
 parse all joints, you can do:
