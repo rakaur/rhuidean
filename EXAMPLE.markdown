@@ -8,7 +8,7 @@ Information and repositories can be found on [GitHub][].
 [github]: http://github.com/rakaur/rhuidean/
 
 EXAMPLES
----------
+--------
 
 I tried to design the interface to the library to be as simple as possible,
 but at some turns there's always going to be the complexity from the
@@ -73,16 +73,16 @@ Now let's take a closer look at events.
 For example, if you'd like to join a channel when it connects to the server,
 a good way is to wait for the MOTD and then join:
 
-    client.on(IRC::Numeric::RPL_ENDOFMOTD) { c.join("#example") }
+    client.on(IRC::Numeric::RPL_ENDOFMOTD) { client.join("#example") }
 
 Aside from numerics having funny names, it's pretty easy. If you'd like to
-parse all joints, you can do:
+parse all joins, you can do:
 
     client.on(:JOIN) { |m| # parse... }
 
 You can make as many handlers for the same event as you like. Generally, they
 will be executed in the order you define them. You can listen for any protocol
-command or any numeric (see lib/rhuidean/numeric.rb for a ful list).
+command or any numeric (see lib/rhuidean/numeric.rb for a full list).
 
 Since this is the basic non-state-keeping client, if you want to know about
 channel modes you'd have to parse them yourself:
@@ -141,9 +141,9 @@ them. As it does so it also sends off mode-specific events, like:
     end
 
 As you can see, these special mode events don't send the standard `IRC::Message`
-object. `m` is that object , `mode` is :add or :del depending on if the
+object. `m` is that object , `mode` is `:add` or `:del` depending on if the
 mode is being added or removed, and `param` is the parameter, if there is one.
-In this case, there is not, but if it were :limited the param would be the
+In this case, there is not, but if it were `:limited` the param would be the
 number it's limited to.
 
 The names of the modes are as follows:
@@ -210,5 +210,5 @@ If you want to use events outside of the library's classes, feel free to take
 a peak at `event.rb`. It's pretty straightforward and well-documented. I've
 also included a small class that will execute code after X seconds or every N
 seconds. If you might find this useful check out `timer.rb`, which is also
-very straightfoward.
+very straightforward.
 
