@@ -2,7 +2,7 @@
 # rhuidean: a small, lightweight IRC client library
 # lib/rhuidean/timer.rb: timed code execution
 #
-# Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
+# Copyright (c) 2003-2011 Eric Will <rakaur@malkier.net>
 #
 
 module IRC

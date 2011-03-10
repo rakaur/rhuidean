@@ -201,7 +201,7 @@ per-connection, not per-channel. They also keep note of their status modes.
 At the moment, the state-keeping does not include user modes. You can do so
 yourself by listening for the raw MODE command, of course.
 
-===
+--------------------------------------------------------------------------------
 
 For further information see the rdoc documentation. This should do a pretty
 good (and up-to-date!) job of documenting the code itself.

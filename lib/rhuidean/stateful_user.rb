@@ -2,7 +2,7 @@
 # rhuidean: a small, lightweight IRC client library
 # lib/rhuidean/stateful_user.rb: state-keeping IRC user
 #
-# Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
+# Copyright (c) 2003-2011 Eric Will <rakaur@malkier.net>
 #
  
 # Import required app modules
