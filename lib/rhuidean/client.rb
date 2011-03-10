@@ -195,7 +195,7 @@ class Client
             ret = @socket.read_nonblock(8192)
         rescue IO::WaitReadable
             retry
-        rescue Exception
+        rescue Exception => e
             ret = nil # Dead
         end
 
