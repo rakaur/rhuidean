@@ -2,7 +2,7 @@
 # rhuidean: a small, lightweight IRC client library
 # test/tc_client.rb: unit testing
 #
-# Copyright (c) 2003-2010 Eric Will <rakaur@malkier.net>
+# Copyright (c) 2003-2011 Eric Will <rakaur@malkier.net>
 #
 
 warn <<-end
