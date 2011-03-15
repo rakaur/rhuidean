@@ -323,7 +323,7 @@ class IRCHash < Hash
         if @casemapping == :rfc
             string.downcase.tr('{}|^', '[]\\~')
         else
-            string
+            string.downcase
         end
     end
 end
