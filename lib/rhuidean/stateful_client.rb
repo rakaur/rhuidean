@@ -103,7 +103,7 @@ class StatefulClient < Client
 
         # Parse and sync channel modes
         on(:MODE) do |m|
-            next unless @channel_types.include?(m.target[0])
+            next unless @channel_types.include?(m.target[0].chr)
             @channels[m.target].parse_modes(m, m.params[0], m.params[1..-1])
         end
 
