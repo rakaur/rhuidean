@@ -101,6 +101,11 @@ class Client
     def quit(message = '')
         @sendq << "QUIT :#{message}"
     end
+
+    # Send an IRC OPER command.
+    def oper(name, password)
+        @sendq << "OPER #{name} #{password}"
+    end
 end
 
 end # module IRC
