@@ -13,8 +13,8 @@ TABLE OF CONTENTS
   2. Installation
   3. Contact and support
 
-1. CREDITS
-----------
+1\. CREDITS
+-----------
 
 Rhuidean is not based on any other code. I wrote the majority of it in a
 single day as a way to try out a Ruby-based event system and as an exercise
@@ -32,8 +32,8 @@ Almost all of the testing was also done by me, with help from:
 
 And others on irc.malkier.net.
 
-2. INSTALLATION
----------------
+2\. INSTALLATION
+----------------
 
 This should be as simple as:
 
@@ -47,8 +47,8 @@ based on the current code and install it by doing:
 
 There's just not much else to it.
 
-3. CONTACT AND SUPPORT
-----------------------
+3\. CONTACT AND SUPPORT
+-----------------------
 
 For bug or feature reports, please use GitHub's [issue tracking][1].
 
