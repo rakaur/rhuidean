@@ -26,7 +26,7 @@ class Client
     # Our TCPSocket.
     attr_reader   :socket
 
-    # A simple Exeption class.
+    # A simple Exception class.
     class Error < Exception
     end
 
