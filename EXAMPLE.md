@@ -5,7 +5,11 @@ This program is free but copyrighted software; see the LICENSE file.
 
 Information and repositories can be found on [GitHub][].
 
+Reference implementations can be found in [rhubot][] and [rhuhub][].
+
 [github]: http://github.com/rakaur/rhuidean/
+[rhubot]: http://github.com/rakaur/rhubot/
+[rhuhub]: http://github.com/rakaur/rhuhub/
 
 EXAMPLES
 --------

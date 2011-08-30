@@ -21,6 +21,11 @@ single day as a way to try out a Ruby-based event system and as an exercise
 writing in The Ruby Way. As such, rhuidean's code is very clean and concise,
 and it also offers clever ways of accomplishing basic and advanced tasks.
 
+Reference implementations can be found in [rhubot][] and [rhuhub][].
+
+[rhubot]: http://github.com/rakaur/rhubot/
+[rhuhub]: http://github.com/rakaur/rhuhub/
+
 The current active development/maintenance is done by:
 
 - rakaur, Eric Will <rakaur@malkier.net>
