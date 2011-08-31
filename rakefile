@@ -6,9 +6,10 @@
 #
 
 # Import required Ruby modules.
-%w(rdoctask testtask gempackagetask packagetask).each do |m|
-    require 'rake/' + m
-end
+require 'rdoc'
+require 'rake/testtask'
+require 'rubygems/package_task'
+
 
 $: << Dir.getwd
 $: << 'lib'
@@ -27,17 +28,6 @@ Rake::TestTask.new do |t|
 end
 
 #
-# Documentation generation.
-#
-# $ rake rdoc
-#
-Rake::RDocTask.new do |r|
-    r.rdoc_dir = 'doc/rdoc'
-    r.options << '--line-numbers' << '--inline-source'
-    r.rdoc_files.include('lib/rhuidean.rb lib/rhuidean/**/*')
-end
-
-#
 # Package generation.
 #
 # $ rake package
@@ -46,14 +36,6 @@ PKG_FILES = FileList['README.md', 'rakefile',
                      'lib/rhuidean.rb', 'lib/rhuidean/**/*.rb',
                      'test/*.rb']
 
-Rake::PackageTask.new('package') do |p|
-    p.name          = 'rhuidean'
-    p.version       = Rhuidean::VERSION
-    p.need_tar      = false
-    p.need_zip      = false
-    p.package_files = PKG_FILES
-end
-
 spec = Gem::Specification.new do |s|
     s.name     = 'rhuidean'
     s.version  = Rhuidean::VERSION
@@ -61,14 +43,19 @@ spec = Gem::Specification.new do |s|
     s.email    = 'rakaur@malkier.net'
     s.homepage = 'http://github.com/rakaur/rhuidean/'
     s.platform = Gem::Platform::RUBY
-    s.summary  = 'a small, lightweight IRC client library'
     s.files    = PKG_FILES.to_a
 
     s.require_paths = %w(lib)
     s.test_file     = 'test/ts_rhuidean.rb'
     s.has_rdoc      = true
+    s.description   = 'a small, lightweight IRC client library'
+    s.summary       = 'a small lightweight IRC client library'
 end
 
-Rake::GemPackageTask.new(spec) do
+Gem::PackageTask.new(spec) do |p|
+    p.name          = 'rhuidean'
+    p.version       = Rhuidean::VERSION
+    p.need_tar      = false
+    p.need_zip      = false
+    p.package_files = PKG_FILES
 end
-
