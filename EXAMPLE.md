@@ -36,21 +36,23 @@ MODE, since it has to parse the modes anyway).
 We'll start with `IRC::Client`. Anything done here can also be done with
 `IRC::StatefulClient`, though, as long as you `require rhuidean/stateful_client`
 
-    client = IRC::Client.new do |c|
-        c.server   = "irc.example.com"
-        c.port     = 6667
-        c.password = "optional_password"
+```ruby
+client = IRC::Client.new do |c|
+    c.server   = "irc.example.com"
+    c.port     = 6667
+    c.password = "optional_password"
 
-        c.nickname = "rhuidean-bot"
-        c.username = "rhuidean"
-        c.realname = "built by the Jenn Aiel"
+    c.nickname = "rhuidean-bot"
+    c.username = "rhuidean"
+    c.realname = "built by the Jenn Aiel"
 
-        # These provide basic logging. Debug shows all network traffic.
-        # Logger can be set to false to turn off logging.
-        # Log level is one of :fatal, :error, :warning, :info, :debug
-        c.logger       = Logger.new($stdout)
-        c.log_level    = :info
-    end
+    # These provide basic logging. Debug shows all network traffic.
+    # Logger can be set to false to turn off logging.
+    # Log level is one of :fatal, :error, :warning, :info, :debug
+    c.logger       = Logger.new($stdout)
+    c.log_level    = :info
+end
+```
 
 Now you have an `IRC::Client`. You can use the client to listen to events so
 that you can do things. We explore events in depth below. After you're finished
@@ -61,14 +63,18 @@ To do this, you need only to call the `IRC::Client#io_loop` method. The
 library generally assumes it's going to be in a thread, so that you can have
 more than one `Client` at a time. A good way to do this is:
 
-    client.thread = Thread.new { client.io_loop }
+```ruby
+client.thread = Thread.new { client.io_loop }
+```
 
 You can do whatever you like with the thread(s). Generally you'll want to
 join them all to the main thread so that the interpreter doesn't exit. So,
 whenever you're done and ready for your program to sit and loop, do something
 along the lines of:
 
-    client.thread.join
+```ruby
+client.thread.join
+```
 
 Any code below this will not be ran until the `Client`'s thread exits.
 
@@ -77,12 +83,16 @@ Now let's take a closer look at events.
 For example, if you'd like to join a channel when it connects to the server,
 a good way is to wait for the MOTD and then join:
 
-    client.on(IRC::Numeric::RPL_ENDOFMOTD) { client.join("#example") }
+```ruby
+client.on(IRC::Numeric::RPL_ENDOFMOTD) { client.join("#example") }
+```
 
 Aside from numerics having funny names, it's pretty easy. If you'd like to
 parse all joins, you can do:
 
-    client.on(:JOIN) { |m| # parse... }
+```ruby
+client.on(:JOIN) { |m| # parse... }
+```
 
 You can make as many handlers for the same event as you like. Generally, they
 will be executed in the order you define them. You can listen for any protocol
@@ -91,7 +101,9 @@ command or any numeric (see lib/rhuidean/numeric.rb for a full list).
 Since this is the basic non-state-keeping client, if you want to know about
 channel modes you'd have to parse them yourself:
 
-    client.on(:MODE) { |m| # check to see it's a channel mode, not a umode... }
+```ruby
+client.on(:MODE) { |m| # check to see it's a channel mode, not a umode... }
+```
 
 All these events pass your block an IRC::Message object. This contains all the
 information about the IRC data you could want, including the raw data from the
@@ -125,10 +137,12 @@ There might be more, and some might be new. This isn't exhaustive. Check rdoc.
 
 If you want to auto-op someone that joins:
 
-    client.on(:JOIN) do |m|
-        # Check to see if you should do the op
-        client.mode(m.target, "+o #{m.origin_nick}")
-    end
+```ruby
+client.on(:JOIN) do |m|
+    # Check to see if you should do the op
+    client.mode(m.target, "+o #{m.origin_nick}")
+end
+```
 
 Pretty simple stuff.
 
@@ -136,13 +150,15 @@ It's worth noting that `IRC::StatefulClient` offers more events, particularly
 in terms of channel modes. It keeps track of channel modes, and so must parse
 them. As it does so it also sends off mode-specific events, like:
 
-    client.on(:mode_secret) do |m, mode, param|
-        if mode == :add
-             client.privmsg(m.target, "We're hidden!")
-        elsif mode == :del
-            client.privmsg(m.target, "We're not hidden :(")
-       end
+```ruby
+client.on(:mode_secret) do |m, mode, param|
+    if mode == :add
+         client.privmsg(m.target, "We're hidden!")
+    elsif mode == :del
+        client.privmsg(m.target, "We're not hidden :(")
     end
+end
+```
 
 As you can see, these special mode events don't send the standard `IRC::Message`
 object. `m` is that object , `mode` is `:add` or `:del` depending on if the
@@ -190,17 +206,19 @@ available from `IRC::StatefulClient#channels`. Each `IRC::StatefulUser` keeps
 track of the `IRC::StatefulChannels` it's in. The `StatefulUsers` are
 per-connection, not per-channel. They also keep note of their status modes.
 
-    client.on(:PRIVMSG) do |m|
-        chan = client.channels[m.target] # This is an IRC::StatefulChannel
-        user = chan.users[m.origin_nick] # This is an IRC::StatefulUser
+```ruby
+client.on(:PRIVMSG) do |m|
+    chan = client.channels[m.target] # This is an IRC::StatefulChannel
+    user = chan.users[m.origin_nick] # This is an IRC::StatefulUser
 
-        user.modes[chan.name] # => [:oper, :voice]
-        user.modes            # => { "#malkier" => [:oper, :voice] }
-        user.channels         # => { "#malkier" => <IRC::StatefulChannel> }
+    user.modes[chan.name] # => [:oper, :voice]
+    user.modes            # => { "#malkier" => [:oper, :voice] }
+    user.channels         # => { "#malkier" => <IRC::StatefulChannel> }
 
-        chan.modes            # => [:secret, :topic_lock, :no_external]
-        chan.users            # => { "rakaur" => <IRC::StatefulUser>, ... }
-    end
+    chan.modes            # => [:secret, :topic_lock, :no_external]
+    chan.users            # => { "rakaur" => <IRC::StatefulUser>, ... }
+end
+```
 
 At the moment, the state-keeping does not include user modes. You can do so
 yourself by listening for the raw MODE command, of course.
