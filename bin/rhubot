@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+#
+# rhuidean: a small, powerful IRC client library
+# bin/rhubot: a stub IRC client for rhuidean-2.0.0
+#
+# Copyright (c) 2011 Eric Will <rakaur@malkier.net>
+# Rights to this code are documented in doc/license.md
+#
+
+$LOAD_PATH.unshift File.expand_path('../',    File.dirname(__FILE__))
+$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
+
+require 'rubygems'
+require 'rhuidean'
+
+Dir.chdir File.expand_path('..', File.dirname(__FILE__))
+
+def configure(&block)
+  puts "rhubot: version #{Rhuidean::VERSION} [#{RUBY_PLATFORM}]"
+end
+
+#
+# This is the configuration. Edit from here down.
+#
+# HOW TO USE THIS FILE:
+#
+# This file is, strictly speaking, a Ruby script. We've provided
+# methods that allow the configuration to be simple and human-readable.
+# Anything that works in Ruby will technically work here, but we
+# suggest sticking with the basics unless you know what you're doing.
+#
+# Unquoted strings are interpreted as Ruby statements. Numbers do not
+# need to be encapsulated within quotes. If your string is basic alphanumeric
+# you can use a :symbol (prefixing your string with a colon instead of
+# encapsulting it with quotations) as it is less noisy.
+#
+
+# The actual configuration begins here
+configure do
+end
